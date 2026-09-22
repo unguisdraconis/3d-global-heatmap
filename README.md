@@ -1,25 +1,42 @@
-# TerraTherm — 3D Global Heatmap
+# TerraTherm
 
-An interactive 3D globe prototype for exploring 52 weekly global temperature fields. React coordinates state, D3 drives the semantic temperature legend, and Three.js handles climate textures, raycasting, temporal interpolation, and GPU range filtering.
+TerraTherm is a strict TypeScript climate-visualization application for exploring 52 synthetic weekly temperature fields on a 3D globe. It coordinates a D3 area-weighted temperature legend with a single Three.js shader-rendered sphere.
 
-## Run locally
-
-```bash
-npm install
-npm run generate:data
-npm run dev
-```
-
-The data generator creates the canonical `1440 × 720` land mask and 104 raw `Uint16` weekly binary grids in `public/data/2025` (about 208 MiB). Generated fields are synthetic and intended to validate the interface and rendering architecture—not for scientific interpretation. Replace the generator's fields with processed ERA5 and NOAA OISST rasters while retaining the manifest and binary encoding.
+> The bundled 2025 fields are deterministic synthetic architecture fixtures. They are not ERA5 or NOAA OISST observations and must not be used for scientific analysis.
 
 ## Architecture
 
-- Numeric temperature fields remain in CPU `Uint16Array`s for instant tooltip lookup and GPU textures for display.
-- Legend hover only updates shader uniforms; it never scans the million-cell raster.
-- The fragment shader composites land air temperature with ocean SST, uses a fixed annual lookup table, and interpolates adjacent weekly textures.
-- Country borders and coastlines are separate Natural Earth vector overlays.
-- The adjacent-frame cache retains a small five-frame LRU and prefetches playback neighbors.
+- `src/climate` owns the canonical 1440 × 720 grid, temperature encoding, runtime manifest validation, explicit little-endian binary parsing, URL construction, frame loading, in-flight deduplication, and five-frame LRU cache.
+- `src/globe` owns R3F rendering, numeric data textures, shader interpolation and filtering, CPU hover lookup, tooltips, and independent vector overlays.
+- `src/legend` owns the shared annual palette, D3 scale and histogram path, pointer inversion, keyboard interaction, and mode-consistent percentage calculations.
+- `src/app` owns semantic application state and atomic frame transitions. React is not updated from the render loop.
+- `scripts/generate-data.ts` explicitly regenerates the deterministic local fixtures. It is never run by install, test, or build.
 
-## Encoding
+The CPU answers which cell and temperature the user points to. The GPU answers where the selected temperature occurs globally.
 
-`temperatureC = encoded × 0.01 − 100`; `65535` is missing and `65534` is reserved. Grid rows run north-to-south, columns west-to-east, and `index = row × 1440 + column`.
+## Display semantics
+
+- **Composite:** synthetic 2 m air temperature over land plus synthetic sea-surface temperature over ocean; uses the combined histogram.
+- **Air · land:** synthetic 2 m air temperature on land; ocean is intentionally shown as unsupported; uses the land histogram.
+- **Sea:** synthetic sea-surface temperature over ocean; land is intentionally shown as unsupported; uses the ocean histogram.
+
+All modes share a fixed −80 °C to +60 °C annual color scale.
+
+## Commands
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run generate:data
+npm run typecheck
+npm run lint
+npm test
+npm run test:watch
+```
+
+`npm run generate:data` overwrites the annual fixtures and should only be run deliberately. Ordinary development, testing, and builds use the checked-in files under `public/data/2025`.
+
+## Data contract
+
+Each temperature raster contains 1,036,800 little-endian `Uint16` values (2,073,600 bytes). Values use `temperatureC = encoded × 0.01 − 100`; `65534` is reserved and `65535` is missing. The land/ocean mask contains 1,036,800 `Uint8` values, where `0` is ocean and `1` is land.

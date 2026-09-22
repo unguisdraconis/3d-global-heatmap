@@ -1,0 +1,53 @@
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { FrameRepository, loadManifest, loadMask } from '../climate/frameLoader';
+import type { DisplayMode, HoveredCell, LegendSelection, TemperatureUnit, VectorLayerVisibility } from '../climate/types';
+import { climateReducer, effectiveLegendSelection, initialClimateState } from './climateReducer';
+
+export function useClimateExplorer() {
+  const [state, dispatch] = useReducer(climateReducer, initialClimateState);
+  const repositoryRef = useRef<FrameRepository | null>(null);
+  const requestCounter = useRef(0);
+  const requestWeekRef = useRef<(week: number) => void>(() => undefined);
+
+  const requestWeek = useCallback((week: number) => {
+    const repository = repositoryRef.current;
+    if (!repository) return;
+    const normalized = ((week % repository.manifest.frames.length) + repository.manifest.frames.length) % repository.manifest.frames.length;
+    const requestId = ++requestCounter.current;
+    dispatch({ type: 'FRAME_REQUEST', week: normalized, requestId });
+    const currentMeta = repository.frameAt(normalized); const nextMeta = repository.frameAt(normalized + 1);
+    void Promise.all([repository.load(currentMeta), repository.load(nextMeta)]).then(([current, next]) => {
+      dispatch({ type: 'FRAME_SUCCESS', week: normalized, requestId, pair: { current, next, currentMeta, nextMeta } });
+      repository.prefetch(repository.frameAt(normalized - 1)); repository.prefetch(repository.frameAt(normalized + 2));
+    }).catch((error: unknown) => dispatch({ type: 'FRAME_ERROR', requestId, message: error instanceof Error ? error.message : 'Unable to load frame' }));
+  }, []);
+  requestWeekRef.current = requestWeek;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadManifest(undefined, fetch, controller.signal).then(async (manifest) => {
+      const mask = await loadMask(manifest, undefined, fetch, controller.signal);
+      repositoryRef.current = new FrameRepository(manifest);
+      dispatch({ type: 'BOOT_READY', manifest, mask });
+      requestWeekRef.current(0);
+    }).catch((error: unknown) => {
+      if (!controller.signal.aborted) dispatch({ type: 'FATAL_ERROR', message: error instanceof Error ? error.message : 'Unable to initialize climate data' });
+    });
+    return () => controller.abort();
+  }, []);
+
+  const actions = useMemo(() => ({
+    requestWeek: (week: number) => { dispatch({ type: 'SET_PLAYING', playing: false }); requestWeek(week); },
+    advance: () => requestWeek(state.week + 1),
+    setMode: (mode: DisplayMode) => dispatch({ type: 'SET_MODE', mode }),
+    setUnit: (unit: TemperatureUnit) => dispatch({ type: 'SET_UNIT', unit }),
+    setPlaying: (playing: boolean) => dispatch({ type: 'SET_PLAYING', playing }),
+    setHoveredCell: (cell: HoveredCell | null) => dispatch({ type: 'SET_HOVERED_CELL', cell }),
+    setLegendHover: (selection: LegendSelection | null) => dispatch({ type: 'SET_LEGEND_HOVER', selection }),
+    setLegendLock: (selection: LegendSelection | null) => dispatch({ type: 'SET_LEGEND_LOCK', selection }),
+    toggleVectorLayer: (layer: keyof VectorLayerVisibility) => dispatch({ type: 'TOGGLE_VECTOR_LAYER', layer }),
+  }), [requestWeek, state.week]);
+
+  return { state, actions, highlight: effectiveLegendSelection(state) };
+}
+

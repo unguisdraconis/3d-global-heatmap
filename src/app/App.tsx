@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, CircleHelp, Globe2, RotateCcw } from 'lucide-react';
+import { CalendarDays, CircleHelp, RotateCcw } from 'lucide-react';
 import { useClimateExplorer } from './useClimateExplorer';
 import { Globe } from '../globe/Globe';
 import { GlobeTooltip } from '../globe/GlobeTooltip';
@@ -10,6 +10,7 @@ import { TimelineControl } from '../controls/TimelineControl';
 import { UnitControl } from '../controls/UnitControl';
 import { LayerControl } from '../controls/LayerControl';
 import { formatDateRange } from '../shared/formatting';
+import { TemperiesMark } from '../shared/TemperiesMark';
 import { classifyClimateManifest } from '../climate/dataset';
 
 function useReducedMotion(): boolean {
@@ -19,7 +20,7 @@ function useReducedMotion(): boolean {
 }
 
 function LoadingScreen({ error }: { error?: string }) {
-  return <main className="loading-screen" role={error ? 'alert' : 'status'}><div className="loader-orbit"><Globe2 size={31} /></div>
+  return <main className="loading-screen" role={error ? 'alert' : 'status'}><div className="loader-orbit"><TemperiesMark size={43} /></div>
     <h1>{error ? 'Data unavailable' : 'Warming up the planet'}</h1><p>{error ?? 'Validating the manifest and loading canonical 0.25° grids…'}</p>
     {error && <button onClick={() => window.location.reload()}>Try again</button>}</main>;
 }
@@ -49,9 +50,9 @@ export default function App() {
   const transitioning = state.loadState.status === 'loading' && state.loadState.retainingFrame;
   const loadingWeek = state.loadState.status === 'loading' ? state.loadState.requestedWeek : null;
   return <main className="app-shell">
-    <header className="topbar"><div className="brand"><span className="brand-mark"><Globe2 size={22} strokeWidth={1.7} /></span><div><strong>TERRA<span>THERM</span></strong><small>GLOBAL CLIMATE OBSERVATORY</small></div></div>
+    <header className="topbar"><div className="brand"><span className="brand-mark"><TemperiesMark size={37} /></span><div><strong>TEMPERIES</strong><small>GLOBAL CLIMATE OBSERVATORY</small></div></div>
       <nav aria-label="Primary"><button className="nav-active" aria-current="page">Explorer</button><button onClick={() => setAboutOpen((open) => !open)} aria-expanded={aboutOpen}>About the data</button><button aria-label="Help" onClick={() => setAboutOpen(true)}><CircleHelp size={19} /></button></nav></header>
-    {aboutOpen && <aside className="data-notice" role="note"><button aria-label="Close data information" onClick={() => setAboutOpen(false)}>×</button><strong>{aboutHeading}</strong><p>{manifest.notice}</p><p>Land: {manifest.sources.land.dataset}, {manifest.sources.land.variable}. Ocean: {manifest.sources.ocean.dataset}, {manifest.sources.ocean.variable}.</p></aside>}
+    {aboutOpen && <aside className="data-notice" role="note"><button aria-label="Close data information" onClick={() => setAboutOpen(false)}>×</button><blockquote className="about-epigraph" lang="la">temperie blandarum captus aquarum<cite>Ovid, Metamorphoses IV</cite></blockquote><strong>{aboutHeading}</strong><p>{manifest.notice}</p><p>Land: {manifest.sources.land.dataset}, {manifest.sources.land.variable}. Ocean: {manifest.sources.ocean.dataset}, {manifest.sources.ocean.variable}.</p></aside>}
     <section className="workspace"><div className="scene-panel"><div className="scene-glow" />
       <Globe frames={framePair} mask={state.mask} mode={state.mode} renderStyle={state.renderStyle} highlight={highlight} vectorLayers={state.vectorLayers}
         reducedMotion={reducedMotion} onHover={actions.setHoveredCell} onLeave={() => actions.setHoveredCell(null)} />
@@ -74,6 +75,6 @@ export default function App() {
       </aside></section>
     <TemperatureLegend histograms={frame.histograms} mode={state.mode} unit={state.unit} globeValue={state.hoveredCell?.temperatureC ?? null}
       hover={state.legendHover} locked={state.legendLocked} onHover={actions.setLegendHover} onLock={actions.setLegendLock} />
-    <footer><span><i /> {footerLabel}</span><p>Land: {manifest.sources.land.dataset} · Ocean: {manifest.sources.ocean.dataset} · Local static binaries</p><p>© {manifest.year} TerraTherm Lab</p></footer>
+    <footer><span><i /> {footerLabel}</span><p>Land: {manifest.sources.land.dataset} · Ocean: {manifest.sources.ocean.dataset} · Local static binaries</p><p>TEMPERIES TELLURIS</p></footer>
   </main>;
 }

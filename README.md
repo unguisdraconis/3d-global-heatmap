@@ -1,6 +1,6 @@
-# TerraTherm
+# Temperies
 
-TerraTherm is a strict TypeScript climate-visualization application for exploring 52 weekly 2025 temperature fields on a 3D globe. It coordinates a D3 area-weighted temperature legend with a single Three.js shader-rendered sphere.
+Temperies is a strict TypeScript climate-visualization application for exploring 52 weekly 2025 temperature fields on a 3D globe. It coordinates a D3 area-weighted temperature legend with a single Three.js shader-rendered sphere.
 
 > The default 2025 fields combine Copernicus ERA5 daily-mean 2 m air temperature with NOAA OISST v2.1 daily sea-surface temperature, aggregated into weekly means. ERA5 is a reanalysis product and OISST is an analysis product; neither should be described as direct point observations.
 

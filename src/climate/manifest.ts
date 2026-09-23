@@ -81,6 +81,8 @@ function frame(value: unknown, expectedIndex: number, histogramLength: number): 
 export function parseManifest(value: unknown): ClimateManifest {
   const root = record(value, 'manifest');
   exact(root.schemaVersion, '1.0.0', 'schemaVersion');
+  const temporalCoverage = root.temporalCoverage === undefined ? 'annual' : string(root.temporalCoverage, 'temporalCoverage');
+  if (temporalCoverage !== 'annual' && temporalCoverage !== 'reference') throw new Error('temporalCoverage must be annual or reference');
   const grid = record(root.grid, 'grid');
   exact(grid.width, GRID.width, 'grid.width'); exact(grid.height, GRID.height, 'grid.height');
   exact(grid.cellCount, GRID.cellCount, 'grid.cellCount');
@@ -101,7 +103,8 @@ export function parseManifest(value: unknown): ClimateManifest {
   exact(mask.type, 'Uint8', 'mask.type'); exact(mask.ocean, 0, 'mask.ocean'); exact(mask.land, 1, 'mask.land');
   const sources = record(root.sources, 'sources');
   const land = record(sources.land, 'sources.land'); const ocean = record(sources.ocean, 'sources.ocean');
-  if (!Array.isArray(root.frames) || root.frames.length !== FRAME_COUNT) throw new Error(`frames must contain exactly ${FRAME_COUNT} entries`);
+  const expectedFrameCount = temporalCoverage === 'annual' ? FRAME_COUNT : 1;
+  if (!Array.isArray(root.frames) || root.frames.length !== expectedFrameCount) throw new Error(`frames must contain exactly ${expectedFrameCount} entries for ${temporalCoverage} coverage`);
   const frames = root.frames.map((item, index) => frame(item, index, ANNUAL_SCALE.histogramBinCount));
   if (new Set(frames.map((item) => item.id)).size !== frames.length) throw new Error('frame IDs must be unique');
   for (const item of frames) {
@@ -113,7 +116,7 @@ export function parseManifest(value: unknown): ClimateManifest {
   const year = number(root.year, 'year');
   if (!Number.isInteger(year)) throw new Error('year must be an integer');
   return {
-    schemaVersion: '1.0.0', prototypeVersion: string(root.prototypeVersion, 'prototypeVersion'),
+    schemaVersion: '1.0.0', prototypeVersion: string(root.prototypeVersion, 'prototypeVersion'), temporalCoverage,
     created: isoDateTime(root.created, 'created'), year, notice: string(root.notice, 'notice'),
     grid: { width: GRID.width, height: GRID.height, cellCount: GRID.cellCount, resolution: GRID.resolution,
       latitudeOrigin: GRID.latitudeOrigin, longitudeOrigin: GRID.longitudeOrigin,

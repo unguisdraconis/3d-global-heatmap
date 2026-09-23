@@ -1,8 +1,8 @@
 # TerraTherm
 
-TerraTherm is a strict TypeScript climate-visualization application for exploring 52 synthetic weekly temperature fields on a 3D globe. It coordinates a D3 area-weighted temperature legend with a single Three.js shader-rendered sphere.
+TerraTherm is a strict TypeScript climate-visualization application for exploring 52 weekly 2025 temperature fields on a 3D globe. It coordinates a D3 area-weighted temperature legend with a single Three.js shader-rendered sphere.
 
-> The bundled 2025 fields are deterministic synthetic architecture fixtures. They are not ERA5 or NOAA OISST observations and must not be used for scientific analysis.
+> The default 2025 fields combine Copernicus ERA5 daily-mean 2 m air temperature with NOAA OISST v2.1 daily sea-surface temperature, aggregated into weekly means. ERA5 is a reanalysis product and OISST is an analysis product; neither should be described as direct point observations.
 
 ## Architecture
 
@@ -10,15 +10,15 @@ TerraTherm is a strict TypeScript climate-visualization application for explorin
 - `src/globe` owns R3F rendering, numeric data textures, shader interpolation and filtering, CPU hover lookup, tooltips, and independent vector overlays.
 - `src/legend` owns the shared annual palette, D3 scale and histogram path, pointer inversion, keyboard interaction, and mode-consistent percentage calculations.
 - `src/app` owns semantic application state and atomic frame transitions. React is not updated from the render loop.
-- `scripts/generate-data.ts` explicitly regenerates the deterministic local fixtures. It is never run by install, test, or build.
+- `scripts/generate-data.ts` explicitly regenerates the separate deterministic synthetic test dataset. It is never run by install, test, or build.
 
 The CPU answers which cell and temperature the user points to. The GPU answers where the selected temperature occurs globally.
 
 ## Display semantics
 
-- **Composite:** synthetic 2 m air temperature over land plus synthetic sea-surface temperature over ocean; uses the combined histogram.
-- **Air · land:** synthetic 2 m air temperature on land; ocean is intentionally shown as unsupported; uses the land histogram.
-- **Sea:** synthetic sea-surface temperature over ocean; land is intentionally shown as unsupported; uses the ocean histogram.
+- **Composite:** ERA5 2 m air temperature outside the invariant OISST ocean footprint plus OISST sea-surface temperature over supported ocean cells; uses the combined histogram.
+- **Air · land:** ERA5 2 m air temperature over the air-routed surface mask; ocean is intentionally shown as unsupported; uses the land histogram.
+- **Sea:** OISST sea-surface temperature over supported ocean cells; all other cells are intentionally shown as unsupported; uses the ocean histogram.
 
 All modes share a fixed −80 °C to +60 °C annual color scale.
 
@@ -35,7 +35,9 @@ npm test
 npm run test:watch
 ```
 
-`npm run generate:data` overwrites the annual fixtures and should only be run deliberately. Ordinary development, testing, and builds use the checked-in files under `public/data/2025`.
+`npm run generate:data` recreates the isolated synthetic test dataset under `public/synthetic/data/2025`; it does not overwrite the default real dataset. Open that dataset with `?dataset=synthetic`. The validated real year is the checked-in default under `public/data/2025`; `?dataset=real-2025` retains the independently staged copy.
+
+The isolated [real-data pipeline](docs/real-data-pipeline.md) downloads and validates NOAA OISST and Copernicus ERA5 without changing the separate synthetic test dataset.
 
 ## Data contract
 

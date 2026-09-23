@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'public/data', 'eslint.config.js'] },
+  { ignores: ['dist', '.venv-data', 'untouched_data', 'validation_data', 'public/data', 'public/real-reference', 'eslint.config.js'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {

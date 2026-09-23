@@ -51,7 +51,7 @@ export interface FrameMetadata {
   histograms: FrameHistograms;
 }
 export interface ClimateManifest {
-  schemaVersion: '1.0.0'; prototypeVersion: string; created: string; year: number; notice: string;
+  schemaVersion: '1.0.0'; prototypeVersion: string; temporalCoverage: 'annual' | 'reference'; created: string; year: number; notice: string;
   grid: ClimateGrid; encoding: ClimateEncoding; legend: ClimateLegend;
   sources: ClimateSources; mask: MaskMetadata; frames: FrameMetadata[];
 }

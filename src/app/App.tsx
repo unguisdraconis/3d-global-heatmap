@@ -9,6 +9,7 @@ import { TimelineControl } from '../controls/TimelineControl';
 import { UnitControl } from '../controls/UnitControl';
 import { LayerControl } from '../controls/LayerControl';
 import { formatDateRange } from '../shared/formatting';
+import { classifyClimateManifest } from '../climate/dataset';
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -30,18 +31,29 @@ export default function App() {
   if (!state.manifest || !state.mask || !state.framePair) return <LoadingScreen />;
 
   const { manifest, framePair } = state; const frame = framePair.currentMeta;
+  const datasetKind = classifyClimateManifest(manifest);
+  const isReference = datasetKind === 'real-reference';
+  const isSynthetic = datasetKind === 'synthetic';
+  const aboutHeading = isSynthetic ? 'Synthetic architecture fixture' : isReference ? 'Verified real-data reference' : 'Validated 2025 climate data';
+  const sceneDescription = isSynthetic
+    ? 'One year of synthetic planetary surface conditions, mapped at quarter-degree resolution.'
+    : isReference
+      ? 'One verified week of ERA5 and NOAA OISST conditions, mapped at quarter-degree resolution.'
+      : 'One year of ERA5 reanalysis and NOAA OISST conditions, mapped at quarter-degree resolution.';
+  const readyLabel = isSynthetic ? 'SYNTHETIC DATA READY' : isReference ? 'REAL REFERENCE READY' : 'REAL 2025 DATA READY';
+  const footerLabel = isSynthetic ? 'SYNTHETIC TEST DATA' : isReference ? 'REAL REFERENCE DATA' : 'REAL 2025 DATA';
   const dateRange = formatDateRange(frame.startDate, frame.endDate);
   const modeLabel = state.mode === 'composite' ? 'Surface composite' : state.mode === 'air' ? 'Land air temperature' : 'Ocean sea surface';
   const transitioning = state.loadState.status === 'loading' && state.loadState.retainingFrame;
   return <main className="app-shell">
     <header className="topbar"><div className="brand"><span className="brand-mark"><Globe2 size={22} strokeWidth={1.7} /></span><div><strong>TERRA<span>THERM</span></strong><small>GLOBAL CLIMATE OBSERVATORY</small></div></div>
       <nav aria-label="Primary"><button className="nav-active" aria-current="page">Explorer</button><button onClick={() => setAboutOpen((open) => !open)} aria-expanded={aboutOpen}>About the data</button><button aria-label="Help" onClick={() => setAboutOpen(true)}><CircleHelp size={19} /></button></nav></header>
-    {aboutOpen && <aside className="data-notice" role="note"><button aria-label="Close data information" onClick={() => setAboutOpen(false)}>×</button><strong>Synthetic architecture fixture</strong><p>{manifest.notice}</p><p>Land uses an ERA5-style synthetic 2 m air field; ocean uses an OISST-style synthetic sea-surface field. These are not scientific observations.</p></aside>}
+    {aboutOpen && <aside className="data-notice" role="note"><button aria-label="Close data information" onClick={() => setAboutOpen(false)}>×</button><strong>{aboutHeading}</strong><p>{manifest.notice}</p><p>Land: {manifest.sources.land.dataset}, {manifest.sources.land.variable}. Ocean: {manifest.sources.ocean.dataset}, {manifest.sources.ocean.variable}.</p></aside>}
     <section className="workspace"><div className="scene-panel"><div className="scene-glow" />
       <Globe frames={framePair} mask={state.mask} mode={state.mode} highlight={highlight} playing={state.playing} vectorLayers={state.vectorLayers}
         reducedMotion={reducedMotion} onHover={actions.setHoveredCell} onLeave={() => actions.setHoveredCell(null)} onAdvance={actions.advance} />
-      <div className="scene-title"><span className="eyebrow">WEEKLY MEAN · {manifest.year}</span><h1>Earth, in temperature.</h1><p>One year of synthetic planetary surface conditions, mapped at quarter-degree resolution.</p></div>
-      <div className="status-pill"><i /> {transitioning ? 'LOADING FIELD' : 'LOCAL DATA READY'} <span>{manifest.grid.cellCount.toLocaleString()} CELLS</span></div>
+      <div className="scene-title"><span className="eyebrow">WEEKLY MEAN · {manifest.year}</span><h1>Earth, in temperature.</h1><p>{sceneDescription}</p></div>
+      <div className="status-pill"><i /> {transitioning ? 'LOADING FIELD' : readyLabel} <span>{manifest.grid.cellCount.toLocaleString()} CELLS</span></div>
       <div className="globe-hint"><RotateCcw size={15} /> DRAG TO ROTATE · SCROLL TO ZOOM</div>
       <LayerControl layers={state.vectorLayers} onToggle={actions.toggleVectorLayer} />
       {state.hoveredCell && <GlobeTooltip cell={state.hoveredCell} mode={state.mode} unit={state.unit} manifest={manifest} frames={framePair} />}
@@ -55,7 +67,7 @@ export default function App() {
       </aside></section>
     <TemperatureLegend histograms={frame.histograms} mode={state.mode} unit={state.unit} globeValue={state.hoveredCell?.temperatureC ?? null}
       hover={state.legendHover} locked={state.legendLocked} onHover={actions.setLegendHover} onLock={actions.setLegendLock} />
-    <footer><span><i /> SYNTHETIC PROTOTYPE DATA</span><p>Land: ERA5-style 2 m air · Ocean: OISST-style sea surface · Local static binaries</p><p>© {manifest.year} TerraTherm Lab</p></footer>
+    <footer><span><i /> {footerLabel}</span><p>Land: {manifest.sources.land.dataset} · Ocean: {manifest.sources.ocean.dataset} · Local static binaries</p><p>© {manifest.year} TerraTherm Lab</p></footer>
   </main>;
 }
 

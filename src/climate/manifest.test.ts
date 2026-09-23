@@ -13,6 +13,20 @@ const clone = () => structuredClone(valid) as unknown as MutableManifest;
 
 describe('manifest validation', () => {
   it('accepts the current annual manifest', () => expect(parseManifest(valid).frames).toHaveLength(52));
+  it('accepts one explicitly identified reference frame', () => {
+    const item = clone();
+    item.temporalCoverage = 'reference';
+    item.frames = item.frames.slice(0, 1);
+    const parsed = parseManifest(item);
+    expect(parsed.temporalCoverage).toBe('reference');
+    expect(parsed.frames).toHaveLength(1);
+  });
+  it('keeps annual and reference frame counts strict', () => {
+    const annual = clone(); annual.frames = annual.frames.slice(0, 1);
+    expect(() => parseManifest(annual)).toThrow(/52 entries/);
+    const reference = clone(); reference.temporalCoverage = 'reference'; reference.frames = reference.frames.slice(0, 2);
+    expect(() => parseManifest(reference)).toThrow(/1 entries/);
+  });
   it('rejects missing required fields', () => { const item = clone(); delete (item as Record<string, unknown>).grid; expect(() => parseManifest(item)).toThrow(/grid/); });
   it('rejects an inconsistent cell count', () => { const item = clone(); item.grid.cellCount = 1; expect(() => parseManifest(item)).toThrow(/cellCount/); });
   it('rejects bad orientation and unsupported encoding', () => {

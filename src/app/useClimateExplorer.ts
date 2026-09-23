@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { FrameRepository, loadManifest, loadMask } from '../climate/frameLoader';
+import { resolveDatasetBaseUrl } from '../climate/dataset';
 import type { DisplayMode, HoveredCell, LegendSelection, TemperatureUnit, VectorLayerVisibility } from '../climate/types';
 import { climateReducer, effectiveLegendSelection, initialClimateState } from './climateReducer';
 
@@ -8,6 +9,10 @@ export function useClimateExplorer() {
   const repositoryRef = useRef<FrameRepository | null>(null);
   const requestCounter = useRef(0);
   const requestWeekRef = useRef<(week: number) => void>(() => undefined);
+  const dataBaseUrl = useMemo(
+    () => resolveDatasetBaseUrl(window.location.search, import.meta.env.BASE_URL),
+    [],
+  );
 
   const requestWeek = useCallback((week: number) => {
     const repository = repositoryRef.current;
@@ -25,16 +30,16 @@ export function useClimateExplorer() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void loadManifest(undefined, fetch, controller.signal).then(async (manifest) => {
-      const mask = await loadMask(manifest, undefined, fetch, controller.signal);
-      repositoryRef.current = new FrameRepository(manifest);
+    void loadManifest(dataBaseUrl, fetch, controller.signal).then(async (manifest) => {
+      const mask = await loadMask(manifest, dataBaseUrl, fetch, controller.signal);
+      repositoryRef.current = new FrameRepository(manifest, dataBaseUrl);
       dispatch({ type: 'BOOT_READY', manifest, mask });
       requestWeekRef.current(0);
     }).catch((error: unknown) => {
       if (!controller.signal.aborted) dispatch({ type: 'FATAL_ERROR', message: error instanceof Error ? error.message : 'Unable to initialize climate data' });
     });
     return () => controller.abort();
-  }, []);
+  }, [dataBaseUrl]);
 
   const actions = useMemo(() => ({
     requestWeek: (week: number) => { dispatch({ type: 'SET_PLAYING', playing: false }); requestWeek(week); },

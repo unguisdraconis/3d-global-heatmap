@@ -12,7 +12,7 @@ import { encodeTemperatureC } from '../src/climate/temperature';
 const require = createRequire(import.meta.url);
 const topology = require('world-atlas/countries-110m.json') as Topology<{ land: GeometryCollection }>;
 const land = feature(topology, topology.objects.land) as GeoPermissibleObjects;
-const ROOT = path.resolve(`public/data/${DATA_YEAR}`);
+const ROOT = path.resolve(`public/synthetic/data/${DATA_YEAR}`);
 
 const iso = (date: Date) => date.toISOString().slice(0, 10);
 const round = (value: number) => Math.round(value * 1000) / 1000;
@@ -101,7 +101,7 @@ async function main() {
     process.stdout.write(`${String(week + 1).padStart(2, '0')}${week === FRAME_COUNT - 1 ? '\n' : ' '}`);
   }
   const manifest: ClimateManifest = {
-    schemaVersion: '1.0.0', prototypeVersion: '0.2.0', created: `${DATA_YEAR + 1}-01-01T00:00:00.000Z`, year: DATA_YEAR,
+    schemaVersion: '1.0.0', prototypeVersion: '0.2.0', temporalCoverage: 'annual', created: `${DATA_YEAR + 1}-01-01T00:00:00.000Z`, year: DATA_YEAR,
     notice: 'Synthetic demonstration fields. Replace with processed ERA5 and NOAA OISST data for scientific use.',
     grid: { ...GRID, rowDirection: 'north-to-south', columnDirection: 'west-to-east', index: `row * ${GRID.width} + column` },
     encoding: { type: 'Uint16', byteOrder: 'little-endian', scale: ENCODING.scale, offset: ENCODING.offset, missing: ENCODING.missing, reserved: ENCODING.reserved, units: 'degrees Celsius' },

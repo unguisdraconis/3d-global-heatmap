@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FrameHistograms } from '../climate/types';
 import { celsiusToDisplay } from '../climate/temperature';
-import { pointerToTemperatureC, rangeAround } from './legendScale';
+import { pointerToTemperatureC, rangeAround, temperatureFromClientX } from './legendScale';
 import { histogramForMode, percentageInRange } from './legendStatistics';
 
 const histogram: FrameHistograms = { binMinimum: -80, binWidth: 0.5, areaTotal: 10, landArea: 4, oceanArea: 6,
@@ -9,6 +9,11 @@ const histogram: FrameHistograms = { binMinimum: -80, binWidth: 0.5, areaTotal: 
 describe('legend calculations', () => {
   it('inverts pointer position through the fixed Celsius scale', () => {
     expect(pointerToTemperatureC(10, 760, 10)).toBe(-80); expect(pointerToTemperatureC(750, 760, 10)).toBe(60);
+  });
+  it('removes horizontal SVG letterboxing before inverting the pointer', () => {
+    expect(temperatureFromClientX(600, 100, 1000, 72)).toBeCloseTo(-10);
+    expect(temperatureFromClientX(353.333333, 100, 1000, 72)).toBeCloseTo(-80);
+    expect(temperatureFromClientX(846.666667, 100, 1000, 72)).toBeCloseTo(60);
   });
   it('converts Celsius to Fahrenheit for display only', () => expect(celsiusToDisplay(20, 'F')).toBe(68));
   it('selects mode-appropriate histogram populations', () => {

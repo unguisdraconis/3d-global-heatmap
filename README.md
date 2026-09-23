@@ -7,7 +7,7 @@ TerraTherm is a strict TypeScript climate-visualization application for explorin
 ## Architecture
 
 - `src/climate` owns the canonical 1440 × 720 grid, temperature encoding, runtime manifest validation, explicit little-endian binary parsing, URL construction, frame loading, in-flight deduplication, and five-frame LRU cache.
-- `src/globe` owns R3F rendering, numeric data textures, shader interpolation and filtering, CPU hover lookup, tooltips, and independent vector overlays.
+- `src/globe` owns R3F rendering, numeric data textures, shader filtering, CPU hover lookup, tooltips, and independent vector overlays.
 - `src/legend` owns the shared annual palette, D3 scale and histogram path, pointer inversion, keyboard interaction, and mode-consistent percentage calculations.
 - `src/app` owns semantic application state and atomic frame transitions. React is not updated from the render loop.
 - `scripts/generate-data.ts` explicitly regenerates the separate deterministic synthetic test dataset. It is never run by install, test, or build.
@@ -21,6 +21,8 @@ The CPU answers which cell and temperature the user points to. The GPU answers w
 - **Sea:** OISST sea-surface temperature over supported ocean cells; all other cells are intentionally shown as unsupported; uses the ocean histogram.
 
 All modes share a fixed −80 °C to +60 °C annual color scale.
+
+The default **Native grid** rendering style adds derivative-antialiased 0.25° cell boundaries directly in the fragment shader. Boundaries fade when their projected footprint becomes too small, while the authoritative 1440 × 720 nearest-sampled texture remains active at every zoom level. **Clean** hides only those procedural boundaries and uses the same textures and shader pipeline.
 
 ## Commands
 
@@ -37,7 +39,7 @@ npm run test:watch
 
 `npm run generate:data` recreates the isolated synthetic test dataset under `public/synthetic/data/2025`; it does not overwrite the default real dataset. Open that dataset with `?dataset=synthetic`. The validated real year is the checked-in default under `public/data/2025`; `?dataset=real-2025` retains the independently staged copy.
 
-The isolated [real-data pipeline](docs/real-data-pipeline.md) downloads and validates NOAA OISST and Copernicus ERA5 without changing the separate synthetic test dataset.
+The isolated [real-data pipeline](docs/real-data-pipeline.md) downloads and validates NOAA OISST and Copernicus ERA5 without changing the checked-in default or the separate synthetic test dataset.
 
 ## Data contract
 

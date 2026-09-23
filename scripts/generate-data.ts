@@ -50,11 +50,15 @@ function precomputeClimateShape(mask: Uint8Array) {
     areaWeight[row] = Math.max(0, Math.cos(latitudeRadians));
     for (let column = 0; column < GRID.width; column += 1) {
       const index = row * GRID.width + column; const longitude = GRID.longitudeOrigin + column * GRID.resolution; const longitudeRadians = longitude * Math.PI / 180;
-      const continental = Math.sin(longitudeRadians * 2.7 + latitudeRadians * 1.3) * Math.cos(latitudeRadians * 2.2);
+      // Longitude harmonics must be whole numbers so the synthetic field is
+      // continuous where -180° and +180° meet on the globe.
+      const continental = Math.sin(longitudeRadians * 3 + latitudeRadians * 1.3) * Math.cos(latitudeRadians * 2.2);
       const terrain = mask[index] ? (Math.sin(longitudeRadians * 7) * Math.sin(latitudeRadians * 5) + Math.cos(longitudeRadians * 3 - latitudeRadians * 4)) * 2.2 : 0;
       baseAir[index] = 30.5 - absoluteLatitude * 0.78 + continental * 3.2 - terrain;
       baseSst[index] = 29 - Math.pow(absoluteLatitude / 90, 1.35) * 34 + continental * 1.1;
-      seasonal[index] = Math.sign(latitude || 1) * (3 + Math.pow(absoluteLatitude / 90, 1.2) * (mask[index] ? 18 : 7));
+      // Seasonal phase reverses between hemispheres, but must pass smoothly
+      // through zero at the equator rather than jumping between adjacent rows.
+      seasonal[index] = Math.sin(latitudeRadians) * (3 + Math.pow(absoluteLatitude / 90, 1.2) * (mask[index] ? 18 : 7));
     }
   }
   return { baseAir, baseSst, seasonal, areaWeight };

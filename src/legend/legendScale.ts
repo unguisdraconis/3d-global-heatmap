@@ -30,8 +30,24 @@ export function pointerToTemperatureC(pointerX: number, width: number, padding: 
   return legendScale(width, padding).invert(pointerX);
 }
 
-export function temperatureFromClientX(clientX: number, left: number, renderedWidth: number, viewBoxWidth = 760, padding = 10): number {
-  return pointerToTemperatureC((clientX - left) / renderedWidth * viewBoxWidth, viewBoxWidth, padding);
+export function temperatureFromClientX(
+  clientX: number,
+  left: number,
+  renderedWidth: number,
+  renderedHeight: number,
+  viewBoxWidth = 760,
+  viewBoxHeight = 108,
+  padding = 10,
+): number {
+  // SVG's default xMidYMid meet behavior preserves the viewBox aspect ratio.
+  // A wide, fixed-height legend therefore has horizontal letterboxing that is
+  // part of getBoundingClientRect(), but not part of the SVG coordinate space.
+  const scale = Math.min(renderedWidth / viewBoxWidth, renderedHeight / viewBoxHeight);
+  if (!Number.isFinite(scale) || scale <= 0) return ANNUAL_SCALE.minimum;
+  const renderedContentWidth = viewBoxWidth * scale;
+  const contentLeft = left + (renderedWidth - renderedContentWidth) / 2;
+  const viewBoxX = (clientX - contentLeft) / scale;
+  return pointerToTemperatureC(viewBoxX, viewBoxWidth, padding);
 }
 
 export function rangeAround(valueC: number): TemperatureRange {

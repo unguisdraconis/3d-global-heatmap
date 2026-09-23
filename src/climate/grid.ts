@@ -11,6 +11,15 @@ export function normalizeLongitude(longitude: number): number {
   return Object.is(wrapped, -0) ? 0 : wrapped;
 }
 
+export function spherePointToLatLon(x: number, y: number, z: number): LatLon {
+  finite(x, 'x'); finite(y, 'y'); finite(z, 'z');
+  const length = Math.hypot(x, y, z);
+  if (length === 0) throw new RangeError('sphere point must not be the origin');
+  const latitude = Math.asin(Math.min(1, Math.max(-1, y / length))) * 180 / Math.PI;
+  const longitude = normalizeLongitude(Math.atan2(-z, x) * 180 / Math.PI);
+  return { latitude, longitude };
+}
+
 export function gridCellToIndex(row: number, column: number): number {
   if (!Number.isInteger(row) || row < 0 || row >= GRID.height) throw new RangeError(`row must be an integer from 0 to ${GRID.height - 1}`);
   if (!Number.isInteger(column) || column < 0 || column >= GRID.width) throw new RangeError(`column must be an integer from 0 to ${GRID.width - 1}`);
@@ -49,4 +58,3 @@ export function gridCellToLatLon(row: number, column: number): LatLon {
     longitude: GRID.longitudeOrigin + column * GRID.resolution,
   };
 }
-

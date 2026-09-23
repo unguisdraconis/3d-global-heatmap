@@ -31,7 +31,7 @@ export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, l
   const selectionAt = (value: number, isLocked: boolean): LegendSelection => ({ ...rangeAround(value), locked: isLocked });
   const pointerValue = (event: PointerEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    return temperatureFromClientX(event.clientX, rect.left, rect.width);
+    return temperatureFromClientX(event.clientX, rect.left, rect.width, rect.height);
   };
   const handlePointerMove = (event: PointerEvent<SVGSVGElement>) => {
     if (!locked) onHover(selectionAt(pointerValue(event), false));

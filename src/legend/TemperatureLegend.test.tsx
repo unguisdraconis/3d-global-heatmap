@@ -19,6 +19,14 @@ describe('TemperatureLegend interaction', () => {
     fireEvent.click(slider, { clientX: 380 });
     expect(onLock).toHaveBeenCalledWith(expect.objectContaining({ locked: true, value: -10 }));
   });
+  it('keeps pointer values aligned when a wide legend is letterboxed', () => {
+    const onHover = vi.fn();
+    render(<TemperatureLegend {...props} onHover={onHover} onLock={vi.fn()} />);
+    const slider = screen.getByRole('slider');
+    vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({ left: 100, width: 1000, top: 0, bottom: 72, right: 1100, height: 72, x: 100, y: 0, toJSON: () => ({}) });
+    fireEvent.pointerMove(slider, { clientX: 600 });
+    expect(onHover).toHaveBeenCalledWith(expect.objectContaining({ value: -10 }));
+  });
   it('supports arrow keys, lock, and clear', async () => {
     const user = userEvent.setup(); const onHover = vi.fn(); const onLock = vi.fn();
     const { rerender } = render(<TemperatureLegend {...props} onHover={onHover} onLock={onLock} />); const slider = screen.getByRole('slider');

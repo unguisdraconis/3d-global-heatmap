@@ -1,4 +1,5 @@
 export type DisplayMode = 'composite' | 'air' | 'sst';
+export type TemperatureRenderStyle = 'heatmap' | 'smooth';
 export type TemperatureUnit = 'C' | 'F';
 export type SurfaceType = 'land' | 'ocean';
 
@@ -15,7 +16,6 @@ export interface HoveredCell extends GridCell, LatLon {
 export interface TemperatureRange { value: number; minimum: number; maximum: number }
 export interface LegendSelection extends TemperatureRange { locked: boolean }
 export interface VectorLayerVisibility { countries: boolean; coastlines: boolean }
-export interface PlaybackState { playing: boolean; secondsPerWeek: number }
 export type FrameLoadState =
   | { status: 'idle' }
   | { status: 'loading'; requestedWeek: number; retainingFrame: boolean }
@@ -60,4 +60,3 @@ export interface FramePair {
   current: DecodedFrame; next: DecodedFrame;
   currentMeta: FrameMetadata; nextMeta: FrameMetadata;
 }
-

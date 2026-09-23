@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GRID } from './constants';
-import { gridCellToIndex, gridCellToLatLon, indexToGridCell, latLonToGridCell, normalizeLongitude, uvToGridCell } from './grid';
+import { gridCellToIndex, gridCellToLatLon, indexToGridCell, latLonToGridCell, normalizeLongitude, spherePointToLatLon, uvToGridCell } from './grid';
 
 describe('canonical grid', () => {
   it('maps northern and southern edges without overflow', () => {
@@ -27,6 +27,12 @@ describe('canonical grid', () => {
     expect(gridCellToIndex(719, 1439)).toBe(GRID.cellCount - 1);
     expect(indexToGridCell(GRID.cellCount - 1)).toEqual({ row: 719, column: 1439, index: GRID.cellCount - 1 });
   });
+  it('derives geographic coordinates from the globe coordinate system', () => {
+    expect(spherePointToLatLon(1, 0, 0)).toEqual({ latitude: 0, longitude: 0 });
+    expect(spherePointToLatLon(0, 0, 1)).toEqual({ latitude: 0, longitude: -90 });
+    expect(spherePointToLatLon(0, 0, -1)).toEqual({ latitude: 0, longitude: 90 });
+    expect(spherePointToLatLon(0, 1, 0)).toEqual({ latitude: 90, longitude: 0 });
+  });
   it('clamps all UV boundaries to valid cells', () => {
     expect(uvToGridCell(0, 1)).toEqual({ row: 0, column: 0, index: 0 });
     expect(uvToGridCell(1, 0)).toEqual({ row: 719, column: 1439, index: GRID.cellCount - 1 });
@@ -36,6 +42,6 @@ describe('canonical grid', () => {
     expect(() => indexToGridCell(-1)).toThrow(RangeError); expect(() => indexToGridCell(GRID.cellCount)).toThrow(RangeError);
     expect(() => gridCellToIndex(720, 0)).toThrow(RangeError); expect(() => gridCellToIndex(0, 1440)).toThrow(RangeError);
     expect(() => latLonToGridCell(90.1, 0)).toThrow(RangeError); expect(() => uvToGridCell(Number.NaN, 0)).toThrow(RangeError);
+    expect(() => spherePointToLatLon(0, 0, 0)).toThrow(RangeError);
   });
 });
-

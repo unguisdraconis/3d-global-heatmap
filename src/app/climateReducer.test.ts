@@ -4,6 +4,12 @@ import type { FramePair, LegendSelection } from '../climate/types';
 
 const pair = { current: { id: 'a', air: new Uint16Array(), sst: new Uint16Array() }, next: { id: 'b', air: new Uint16Array(), sst: new Uint16Array() } } as FramePair;
 describe('climate state transitions', () => {
+  it('defaults to the native heatmap style and switches without changing climate frames', () => {
+    expect(initialClimateState.renderStyle).toBe('heatmap');
+    const state = { ...initialClimateState, framePair: pair };
+    const smooth = climateReducer(state, { type: 'SET_RENDER_STYLE', renderStyle: 'smooth' });
+    expect(smooth.renderStyle).toBe('smooth'); expect(smooth.framePair).toBe(pair);
+  });
   it('retains the active frame until a requested pair is atomically ready', () => {
     const old = { ...initialClimateState, framePair: pair, week: 3 };
     const loading = climateReducer(old, { type: 'FRAME_REQUEST', week: 4, requestId: 9 });
@@ -21,9 +27,8 @@ describe('climate state transitions', () => {
     const state = climateReducer(climateReducer(initialClimateState, { type: 'SET_LEGEND_HOVER', selection: hover }), { type: 'SET_LEGEND_LOCK', selection: locked });
     expect(state.legendHover).toBeNull(); expect(effectiveLegendSelection(state)).toBe(locked);
   });
-  it('stops playback after a recoverable frame error', () => {
-    const state = { ...initialClimateState, playing: true, framePair: pair, activeRequestId: 2 };
-    expect(climateReducer(state, { type: 'FRAME_ERROR', requestId: 2, message: 'network' })).toMatchObject({ playing: false, loadState: { status: 'error', recoverable: true } });
+  it('keeps the active frame after a recoverable frame error', () => {
+    const state = { ...initialClimateState, framePair: pair, activeRequestId: 2 };
+    expect(climateReducer(state, { type: 'FRAME_ERROR', requestId: 2, message: 'network' })).toMatchObject({ framePair: pair, loadState: { status: 'error', recoverable: true } });
   });
 });
-

@@ -27,4 +27,3 @@ export const ANNUAL_SCALE = Object.freeze({
 export const FRAME_COUNT = 52;
 export const DATA_YEAR = 2025;
 export const FRAME_CACHE_SIZE = 5;
-

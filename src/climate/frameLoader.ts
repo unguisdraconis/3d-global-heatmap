@@ -66,4 +66,3 @@ export class FrameRepository {
     return this.manifest.frames[((index % count) + count) % count]!;
   }
 }
-

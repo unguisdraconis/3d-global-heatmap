@@ -1,4 +1,4 @@
-import type { ClimateManifest, DisplayMode, FrameLoadState, FramePair, HoveredCell, LegendSelection, TemperatureUnit, VectorLayerVisibility } from '../climate/types';
+import type { ClimateManifest, DisplayMode, FrameLoadState, FramePair, HoveredCell, LegendSelection, TemperatureRenderStyle, TemperatureUnit, VectorLayerVisibility } from '../climate/types';
 
 export interface ClimateState {
   manifest: ClimateManifest | null;
@@ -9,8 +9,8 @@ export interface ClimateState {
   loadState: FrameLoadState;
   fatalError: string | null;
   mode: DisplayMode;
+  renderStyle: TemperatureRenderStyle;
   unit: TemperatureUnit;
-  playing: boolean;
   hoveredCell: HoveredCell | null;
   legendHover: LegendSelection | null;
   legendLocked: LegendSelection | null;
@@ -19,7 +19,7 @@ export interface ClimateState {
 
 export const initialClimateState: ClimateState = {
   manifest: null, mask: null, framePair: null, week: 0, activeRequestId: 0,
-  loadState: { status: 'idle' }, fatalError: null, mode: 'composite', unit: 'C', playing: false,
+  loadState: { status: 'idle' }, fatalError: null, mode: 'composite', renderStyle: 'heatmap', unit: 'C',
   hoveredCell: null, legendHover: null, legendLocked: null,
   vectorLayers: { countries: true, coastlines: true },
 };
@@ -31,8 +31,8 @@ export type ClimateAction =
   | { type: 'FRAME_SUCCESS'; week: number; requestId: number; pair: FramePair }
   | { type: 'FRAME_ERROR'; requestId: number; message: string }
   | { type: 'SET_MODE'; mode: DisplayMode }
+  | { type: 'SET_RENDER_STYLE'; renderStyle: TemperatureRenderStyle }
   | { type: 'SET_UNIT'; unit: TemperatureUnit }
-  | { type: 'SET_PLAYING'; playing: boolean }
   | { type: 'SET_HOVERED_CELL'; cell: HoveredCell | null }
   | { type: 'SET_LEGEND_HOVER'; selection: LegendSelection | null }
   | { type: 'SET_LEGEND_LOCK'; selection: LegendSelection | null }
@@ -48,10 +48,10 @@ export function climateReducer(state: ClimateState, action: ClimateAction): Clim
       return { ...state, week: action.week, framePair: action.pair, loadState: { status: 'ready', week: action.week }, hoveredCell: null };
     case 'FRAME_ERROR':
       if (action.requestId !== state.activeRequestId) return state;
-      return { ...state, playing: false, loadState: { status: 'error', message: action.message, recoverable: state.framePair !== null } };
+      return { ...state, loadState: { status: 'error', message: action.message, recoverable: state.framePair !== null } };
     case 'SET_MODE': return { ...state, mode: action.mode, hoveredCell: null };
+    case 'SET_RENDER_STYLE': return { ...state, renderStyle: action.renderStyle };
     case 'SET_UNIT': return { ...state, unit: action.unit };
-    case 'SET_PLAYING': return { ...state, playing: action.playing };
     case 'SET_HOVERED_CELL': return { ...state, hoveredCell: action.cell };
     case 'SET_LEGEND_HOVER': return { ...state, legendHover: action.selection };
     case 'SET_LEGEND_LOCK': return { ...state, legendLocked: action.selection, legendHover: null };
@@ -62,4 +62,3 @@ export function climateReducer(state: ClimateState, action: ClimateAction): Clim
 export function effectiveLegendSelection(state: ClimateState): LegendSelection | null {
   return state.legendLocked ?? state.legendHover;
 }
-

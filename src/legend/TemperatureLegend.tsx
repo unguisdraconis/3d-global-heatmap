@@ -1,21 +1,22 @@
 import { useMemo, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import { area, curveBasis } from 'd3-shape';
-import type { DisplayMode, FrameHistograms, LegendSelection, TemperatureUnit } from '../climate/types';
+import type { DisplayMode, Extrema, FrameHistograms, LegendSelection, TemperatureUnit } from '../climate/types';
 import { ANNUAL_SCALE } from '../climate/constants';
 import { celsiusToDisplay } from '../climate/temperature';
 import { formatLegendValue, HIGHLIGHT_BAND_HALF_WIDTHS_C, legendScale, rangeAround, temperatureColor, temperatureFromClientX } from './legendScale';
-import { histogramForMode, percentageInRange } from './legendStatistics';
+import { extremeForMode, histogramForMode, percentageInRange } from './legendStatistics';
 
 const WIDTH = 760; const HEIGHT = 108; const PADDING = 10;
 const TICKS = [-80, -60, -40, -20, 0, 20, 40, 60];
 
 interface Props {
-  histograms: FrameHistograms; mode: DisplayMode; unit: TemperatureUnit; globeValue: number | null;
+  histograms: FrameHistograms; minimums: Extrema; maximums: Extrema;
+  mode: DisplayMode; unit: TemperatureUnit; globeValue: number | null;
   hover: LegendSelection | null; locked: LegendSelection | null;
   onHover: (selection: LegendSelection | null) => void; onLock: (selection: LegendSelection | null) => void;
 }
 
-export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, locked, onHover, onLock }: Props) {
+export function TemperatureLegend({ histograms, minimums, maximums, mode, unit, globeValue, hover, locked, onHover, onLock }: Props) {
   const [keyboardValue, setKeyboardValue] = useState(0);
   const [bandHalfWidthC, setBandHalfWidthC] = useState<number>(HIGHLIGHT_BAND_HALF_WIDTHS_C[0]);
   const x = useMemo(() => legendScale(WIDTH, PADDING), []);
@@ -28,6 +29,8 @@ export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, l
   const selection = locked ?? hover;
   const marker = selection?.value ?? globeValue;
   const percentage = selection ? percentageInRange(histograms, mode, selection) : null;
+  const weeklyMeanLow = extremeForMode(minimums, mode);
+  const weeklyMeanHigh = extremeForMode(maximums, mode);
 
   const selectionAt = (value: number, isLocked: boolean): LegendSelection => ({ ...rangeAround(value, bandHalfWidthC), locked: isLocked });
   const displayBand = (valueC: number) => unit === 'F' ? valueC * 9 / 5 : valueC;
@@ -63,7 +66,11 @@ export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, l
 
   return <section className="legend-card" aria-label="Interactive temperature legend">
     <div className="legend-heading"><div><span className="eyebrow">TEMPERATURE DISTRIBUTION</span>
-      <p>{mode === 'air' ? 'Air temperature over land' : mode === 'sst' ? 'Sea-surface temperature over ocean' : 'Land air + ocean surface composite'}</p></div>
+      <p>{mode === 'air' ? 'Air temperature over land' : mode === 'sst' ? 'Sea-surface temperature over ocean' : 'Land air + ocean surface composite'}</p>
+      <div className="legend-extremes" role="group" aria-label="Weekly mean extremes">
+        <button type="button" onClick={() => onLock(selectionAt(weeklyMeanLow, true))} aria-label={`Select weekly mean low ${formatLegendValue(weeklyMeanLow, unit)}`}><span>LOW</span><strong>{formatLegendValue(weeklyMeanLow, unit)}</strong></button>
+        <button type="button" onClick={() => onLock(selectionAt(weeklyMeanHigh, true))} aria-label={`Select weekly mean high ${formatLegendValue(weeklyMeanHigh, unit)}`}><span>HIGH</span><strong>{formatLegendValue(weeklyMeanHigh, unit)}</strong></button>
+      </div></div>
       <div className="legend-actions"><div className={`legend-readout ${selection ? 'active' : ''}`} aria-live="polite">
         {selection ? <><strong>{formatLegendValue(selection.value, unit)}</strong><span>{formatBand(bandHalfWidthC)} · {selection.locked ? 'LOCKED' : 'HOVER'}</span></> : <><strong>—</strong><span>SELECT RANGE</span></>}
       </div><label className="legend-band"><span>Highlight band</span><select aria-label="Highlight band" value={bandHalfWidthC} onChange={handleBandChange}>

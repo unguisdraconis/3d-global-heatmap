@@ -73,7 +73,7 @@ export default function App() {
         <TimelineControl week={state.week} frameCount={manifest.frames.length} loading={transitioning} onWeek={actions.requestWeek} />
         <div className="fact-row"><div><span>GRID</span><strong>{manifest.grid.resolution}°</strong></div><div><span>FRAME</span><strong>{String(state.week + 1).padStart(2, '0')} / {manifest.frames.length}</strong></div><div><span>UNITS</span><UnitControl unit={state.unit} onChange={actions.setUnit} /></div></div>
       </aside></section>
-    <TemperatureLegend histograms={frame.histograms} mode={state.mode} unit={state.unit} globeValue={state.hoveredCell?.temperatureC ?? null}
+    <TemperatureLegend histograms={frame.histograms} minimums={frame.minimums} maximums={frame.maximums} mode={state.mode} unit={state.unit} globeValue={state.hoveredCell?.temperatureC ?? null}
       hover={state.legendHover} locked={state.legendLocked} onHover={actions.setLegendHover} onLock={actions.setLegendLock} />
     <footer><span><i /> {footerLabel}</span><p>Land: {manifest.sources.land.dataset} · Ocean: {manifest.sources.ocean.dataset} · Local static binaries</p><p>TEMPERIES TELLURIS</p></footer>
   </main>;

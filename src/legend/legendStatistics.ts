@@ -1,4 +1,10 @@
-import type { DisplayMode, FrameHistograms, TemperatureRange } from '../climate/types';
+import type { DisplayMode, Extrema, FrameHistograms, TemperatureRange } from '../climate/types';
+
+export function extremeForMode(extrema: Extrema, mode: DisplayMode): number {
+  if (mode === 'air') return extrema.land;
+  if (mode === 'sst') return extrema.ocean;
+  return extrema.combined;
+}
 
 export function histogramForMode(histograms: FrameHistograms, mode: DisplayMode): { bins: number[]; area: number; label: string } {
   if (mode === 'air') return { bins: histograms.land, area: histograms.landArea, label: 'land area' };

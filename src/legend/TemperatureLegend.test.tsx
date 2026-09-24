@@ -6,7 +6,12 @@ import { TemperatureLegend } from './TemperatureLegend';
 
 const bins = Array.from({ length: 280 }, () => 1);
 const histograms: FrameHistograms = { binMinimum: -80, binWidth: 0.5, areaTotal: 280, landArea: 280, oceanArea: 280, land: bins, ocean: bins, combined: bins };
-const props = { histograms, mode: 'composite' as const, unit: 'C' as const, globeValue: 12, hover: null, locked: null };
+const props = {
+  histograms,
+  minimums: { combined: -47, land: -47, ocean: -1.8 },
+  maximums: { combined: 36.14, land: 36.14, ocean: 32.59 },
+  mode: 'composite' as const, unit: 'C' as const, globeValue: 12, hover: null, locked: null,
+};
 
 describe('TemperatureLegend interaction', () => {
   it('creates transient pointer ranges and locks them on activation', () => {
@@ -42,6 +47,15 @@ describe('TemperatureLegend interaction', () => {
     render(<TemperatureLegend {...props} locked={locked} onHover={vi.fn()} onLock={onLock} />);
     await user.selectOptions(screen.getByRole('combobox', { name: /highlight band/i }), '2.5');
     expect(onLock).toHaveBeenLastCalledWith({ value: 20, minimum: 17.5, maximum: 22.5, locked: true });
+  });
+  it('locks the current mode weekly-mean low and high using the active band', async () => {
+    const user = userEvent.setup(); const onLock = vi.fn();
+    render(<TemperatureLegend {...props} onHover={vi.fn()} onLock={onLock} />);
+    await user.selectOptions(screen.getByRole('combobox', { name: /highlight band/i }), '2.5');
+    await user.click(screen.getByRole('button', { name: /select weekly mean low/i }));
+    expect(onLock).toHaveBeenLastCalledWith({ value: -47, minimum: -49.5, maximum: -44.5, locked: true });
+    await user.click(screen.getByRole('button', { name: /select weekly mean high/i }));
+    expect(onLock).toHaveBeenLastCalledWith({ value: 36.14, minimum: 33.64, maximum: 38.64, locked: true });
   });
   it('exposes Fahrenheit slider values and a globe-hover marker', () => {
     render(<TemperatureLegend {...props} unit="F" globeValue={20} onHover={vi.fn()} onLock={vi.fn()} />);

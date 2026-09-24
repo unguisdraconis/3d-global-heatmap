@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { FrameHistograms } from '../climate/types';
 import { celsiusToDisplay } from '../climate/temperature';
 import { pointerToTemperatureC, rangeAround, temperatureFromClientX } from './legendScale';
-import { histogramForMode, percentageInRange } from './legendStatistics';
+import { extremeForMode, histogramForMode, percentageInRange } from './legendStatistics';
 
 const histogram: FrameHistograms = { binMinimum: -80, binWidth: 0.5, areaTotal: 10, landArea: 4, oceanArea: 6,
   land: [1, 3], ocean: [2, 4], combined: [3, 7] };
@@ -26,5 +26,11 @@ describe('legend calculations', () => {
     expect(rangeAround(-80)).toEqual({ value: -80, minimum: -80, maximum: -79.5 });
     expect(rangeAround(20, 5)).toEqual({ value: 20, minimum: 15, maximum: 25 });
     expect(rangeAround(60, 2.5)).toEqual({ value: 60, minimum: 57.5, maximum: 60 });
+  });
+  it('selects mode-appropriate weekly-mean extrema', () => {
+    const extrema = { land: -47, ocean: -1.8, combined: -47 };
+    expect(extremeForMode(extrema, 'composite')).toBe(-47);
+    expect(extremeForMode(extrema, 'air')).toBe(-47);
+    expect(extremeForMode(extrema, 'sst')).toBe(-1.8);
   });
 });

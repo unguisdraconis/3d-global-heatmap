@@ -6,6 +6,8 @@ Temperies is a strict TypeScript climate-visualization application for exploring
 > 
 > <img width="1258" height="686" alt="image" src="https://github.com/user-attachments/assets/b38225bb-cd37-4469-a380-d45c0d0f063e" />
 
+Visit the live app here: unguisdraconis.github.io/temperies/
+
 
 ## Architecture
 

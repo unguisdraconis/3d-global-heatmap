@@ -21,10 +21,10 @@ and does not decide which climate variable supplies a raster cell.
 
 ## One-time setup on Windows
 
-The project-local environment uses the installed Python 3.13 runtime:
+Create a project-local environment with Python 3.13:
 
 ```powershell
-C:\Users\jerem\AppData\Local\Programs\Python\Python313\python.exe -m venv .venv-data
+py -3.13 -m venv .venv-data
 .venv-data\Scripts\python.exe -m pip install -r requirements-data.txt
 ```
 
@@ -86,3 +86,8 @@ seven-day frames plus the final eight-day frame. Validated outputs remain under
 Promotion copies the validated annual manifest, surface mask, and 104 weekly
 temperature rasters into `public/data/2025` only after the complete validation
 report passes. The separate synthetic archive must exist before promotion.
+
+See [`DATA_SOURCES.md`](../DATA_SOURCES.md) for source citations, licence links,
+projection details, aggregation semantics, and interpretation limits. The
+checked-in [`data-provenance-2025.md`](data-provenance-2025.md) records compact
+validation totals and hashes for the published dataset.

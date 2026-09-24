@@ -27,7 +27,7 @@ function LoadingScreen({ error }: { error?: string }) {
 
 export default function App() {
   const { state, actions, highlight } = useClimateExplorer();
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [infoPanel, setInfoPanel] = useState<'about' | 'help' | null>(null);
   const reducedMotion = useReducedMotion();
   if (state.fatalError) return <LoadingScreen error={state.fatalError} />;
   if (!state.manifest || !state.mask || !state.framePair) return <LoadingScreen />;
@@ -51,8 +51,23 @@ export default function App() {
   const loadingWeek = state.loadState.status === 'loading' ? state.loadState.requestedWeek : null;
   return <main className="app-shell">
     <header className="topbar"><div className="brand"><span className="brand-mark"><TemperiesMark size={37} /></span><div><strong>TEMPERIES</strong><small>GLOBAL CLIMATE OBSERVATORY</small></div></div>
-      <nav aria-label="Primary"><button className="nav-active" aria-current="page">Explorer</button><button onClick={() => setAboutOpen((open) => !open)} aria-expanded={aboutOpen}>About the data</button><button aria-label="Help" onClick={() => setAboutOpen(true)}><CircleHelp size={19} /></button></nav></header>
-    {aboutOpen && <aside className="data-notice" role="note"><button aria-label="Close data information" onClick={() => setAboutOpen(false)}>×</button><blockquote className="about-epigraph" lang="la">temperie blandarum captus aquarum<cite>Ovid, Metamorphoses IV</cite></blockquote><strong>{aboutHeading}</strong><p>{manifest.notice}</p><p>Land: {manifest.sources.land.dataset}, {manifest.sources.land.variable}. Ocean: {manifest.sources.ocean.dataset}, {manifest.sources.ocean.variable}.</p></aside>}
+      <nav aria-label="Primary"><button className="nav-active" aria-current="page">Explorer</button>
+        <button onClick={() => setInfoPanel((panel) => panel === 'about' ? null : 'about')} aria-controls="information-panel" aria-expanded={infoPanel === 'about'}>About the data</button>
+        <button aria-label="How to use Temperies" aria-controls="information-panel" aria-expanded={infoPanel === 'help'} onClick={() => setInfoPanel((panel) => panel === 'help' ? null : 'help')}><CircleHelp size={19} /></button>
+      </nav></header>
+    {infoPanel && <aside id="information-panel" className="data-notice" role="note" aria-labelledby="information-panel-title">
+      <button aria-label="Close information panel" onClick={() => setInfoPanel(null)}>×</button>
+      {infoPanel === 'about' ? <><blockquote className="about-epigraph" lang="la">temperie blandarum captus aquarum<cite>Ovid, Metamorphoses IV</cite></blockquote>
+        <strong id="information-panel-title">{aboutHeading}</strong><p>{manifest.notice}</p>
+        <p>Land: <a href="https://cds.climate.copernicus.eu/datasets/derived-era5-single-levels-daily-statistics" target="_blank" rel="noreferrer">{manifest.sources.land.dataset}</a>, {manifest.sources.land.variable}. Ocean: <a href="https://www.ncei.noaa.gov/products/optimum-interpolation-sst" target="_blank" rel="noreferrer">{manifest.sources.ocean.dataset}</a>, {manifest.sources.ocean.variable}.</p></>
+        : <><strong id="information-panel-title">How to explore Temperies</strong><ul>
+          <li>Drag the globe to rotate it, then scroll or pinch to zoom.</li>
+          <li>Hover the globe to inspect a cell's coordinates, source, and weekly mean temperature.</li>
+          <li>Hover the legend to preview a temperature band; click it to keep that band selected while changing weeks.</li>
+          <li>Use LOW or HIGH to locate the selected week's spatial extreme, and use Highlight band to widen the selected range.</li>
+          <li>Use the arrows or period slider to request another week. The current globe remains visible while the next field loads.</li>
+        </ul></>}
+    </aside>}
     <section className="workspace"><div className="scene-panel"><div className="scene-glow" />
       <Globe frames={framePair} mask={state.mask} mode={state.mode} renderStyle={state.renderStyle} highlight={highlight} vectorLayers={state.vectorLayers}
         reducedMotion={reducedMotion} onHover={actions.setHoveredCell} onLeave={() => actions.setHoveredCell(null)} />
@@ -75,6 +90,7 @@ export default function App() {
       </aside></section>
     <TemperatureLegend histograms={frame.histograms} minimums={frame.minimums} maximums={frame.maximums} mode={state.mode} unit={state.unit} globeValue={state.hoveredCell?.temperatureC ?? null}
       hover={state.legendHover} locked={state.legendLocked} onHover={actions.setLegendHover} onLock={actions.setLegendLock} />
-    <footer><span><i /> {footerLabel}</span><p>Land: {manifest.sources.land.dataset} · Ocean: {manifest.sources.ocean.dataset} · Local static binaries</p><p>TEMPERIES TELLURIS</p></footer>
+    <footer><span><i /> {footerLabel}</span><p>Land: {manifest.sources.land.dataset} · Ocean: {manifest.sources.ocean.dataset} · Local static binaries</p>
+      <nav aria-label="Project links"><a href="https://github.com/unguisdraconis/temperies/blob/main/DATA_SOURCES.md" target="_blank" rel="noreferrer">Methodology</a><a href="https://github.com/unguisdraconis/temperies" target="_blank" rel="noreferrer">Source code</a></nav><p>TEMPERIES TELLURIS</p></footer>
   </main>;
 }

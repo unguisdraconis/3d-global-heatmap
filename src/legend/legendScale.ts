@@ -7,6 +7,7 @@ import { celsiusToDisplay } from '../climate/temperature';
 
 const PALETTE = ['#28166f', '#2946b6', '#1c87d2', '#33c3ca', '#8fd28e', '#f3d45a', '#f59b3b', '#e75236', '#a5112d', '#5a061d'];
 export const temperatureInterpolator = interpolateRgbBasis(PALETTE);
+export const HIGHLIGHT_BAND_HALF_WIDTHS_C = [0.5, 1, 2.5, 5] as const;
 
 export function temperatureColor(valueC: number): string {
   const t = (valueC - ANNUAL_SCALE.minimum) / (ANNUAL_SCALE.maximum - ANNUAL_SCALE.minimum);
@@ -50,9 +51,10 @@ export function temperatureFromClientX(
   return pointerToTemperatureC(viewBoxX, viewBoxWidth, padding);
 }
 
-export function rangeAround(valueC: number): TemperatureRange {
+export function rangeAround(valueC: number, halfWidthC: number = HIGHLIGHT_BAND_HALF_WIDTHS_C[0]): TemperatureRange {
+  if (!Number.isFinite(halfWidthC) || halfWidthC <= 0) throw new RangeError('highlight half-width must be positive');
   const value = Math.min(ANNUAL_SCALE.maximum, Math.max(ANNUAL_SCALE.minimum, valueC));
-  return { value, minimum: Math.max(ANNUAL_SCALE.minimum, value - 0.5), maximum: Math.min(ANNUAL_SCALE.maximum, value + 0.5) };
+  return { value, minimum: Math.max(ANNUAL_SCALE.minimum, value - halfWidthC), maximum: Math.min(ANNUAL_SCALE.maximum, value + halfWidthC) };
 }
 
 export function formatLegendValue(valueC: number, unit: TemperatureUnit): string {

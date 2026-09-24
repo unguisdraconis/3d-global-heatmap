@@ -36,9 +36,17 @@ describe('TemperatureLegend interaction', () => {
     rerender(<TemperatureLegend {...props} locked={locked} onHover={onHover} onLock={onLock} />);
     await user.click(screen.getByRole('button', { name: /clear selected/i })); expect(onLock).toHaveBeenLastCalledWith(null);
   });
+  it('widens a locked highlight band without changing its center', async () => {
+    const user = userEvent.setup(); const onLock = vi.fn();
+    const locked = { value: 20, minimum: 19.5, maximum: 20.5, locked: true } satisfies LegendSelection;
+    render(<TemperatureLegend {...props} locked={locked} onHover={vi.fn()} onLock={onLock} />);
+    await user.selectOptions(screen.getByRole('combobox', { name: /highlight band/i }), '2.5');
+    expect(onLock).toHaveBeenLastCalledWith({ value: 20, minimum: 17.5, maximum: 22.5, locked: true });
+  });
   it('exposes Fahrenheit slider values and a globe-hover marker', () => {
     render(<TemperatureLegend {...props} unit="F" globeValue={20} onHover={vi.fn()} onLock={vi.fn()} />);
     expect(screen.getByRole('slider')).toHaveAttribute('aria-valuemin', '-112');
+    expect(screen.getByRole('option', { name: '±0.9°F' })).toBeInTheDocument();
     expect(screen.getByTestId('temperature-marker')).toBeInTheDocument();
   });
 });

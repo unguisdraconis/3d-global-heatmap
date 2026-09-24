@@ -24,5 +24,7 @@ describe('legend calculations', () => {
     expect(percentageInRange(histogram, 'composite', { value: -79.75, minimum: -80, maximum: -79.51 })).toBe(30);
     expect(percentageInRange(histogram, 'composite', { value: -79.5, minimum: -80, maximum: -79 })).toBe(100);
     expect(rangeAround(-80)).toEqual({ value: -80, minimum: -80, maximum: -79.5 });
+    expect(rangeAround(20, 5)).toEqual({ value: 20, minimum: 15, maximum: 25 });
+    expect(rangeAround(60, 2.5)).toEqual({ value: 60, minimum: 57.5, maximum: 60 });
   });
 });

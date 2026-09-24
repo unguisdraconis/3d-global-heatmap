@@ -1,9 +1,9 @@
-import { useMemo, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useMemo, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import { area, curveBasis } from 'd3-shape';
 import type { DisplayMode, FrameHistograms, LegendSelection, TemperatureUnit } from '../climate/types';
 import { ANNUAL_SCALE } from '../climate/constants';
 import { celsiusToDisplay } from '../climate/temperature';
-import { formatLegendValue, legendScale, rangeAround, temperatureColor, temperatureFromClientX } from './legendScale';
+import { formatLegendValue, HIGHLIGHT_BAND_HALF_WIDTHS_C, legendScale, rangeAround, temperatureColor, temperatureFromClientX } from './legendScale';
 import { histogramForMode, percentageInRange } from './legendStatistics';
 
 const WIDTH = 760; const HEIGHT = 108; const PADDING = 10;
@@ -17,6 +17,7 @@ interface Props {
 
 export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, locked, onHover, onLock }: Props) {
   const [keyboardValue, setKeyboardValue] = useState(0);
+  const [bandHalfWidthC, setBandHalfWidthC] = useState<number>(HIGHLIGHT_BAND_HALF_WIDTHS_C[0]);
   const x = useMemo(() => legendScale(WIDTH, PADDING), []);
   const population = histogramForMode(histograms, mode);
   const maxBin = Math.max(1, ...population.bins);
@@ -28,7 +29,14 @@ export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, l
   const marker = selection?.value ?? globeValue;
   const percentage = selection ? percentageInRange(histograms, mode, selection) : null;
 
-  const selectionAt = (value: number, isLocked: boolean): LegendSelection => ({ ...rangeAround(value), locked: isLocked });
+  const selectionAt = (value: number, isLocked: boolean): LegendSelection => ({ ...rangeAround(value, bandHalfWidthC), locked: isLocked });
+  const displayBand = (valueC: number) => unit === 'F' ? valueC * 9 / 5 : valueC;
+  const formatBand = (valueC: number) => `±${displayBand(valueC).toFixed(1)}°${unit}`;
+  const handleBandChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextBand = Number(event.target.value);
+    setBandHalfWidthC(nextBand);
+    if (locked) onLock({ ...rangeAround(locked.value, nextBand), locked: true });
+  };
   const pointerValue = (event: PointerEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return temperatureFromClientX(event.clientX, rect.left, rect.width, rect.height);
@@ -56,9 +64,11 @@ export function TemperatureLegend({ histograms, mode, unit, globeValue, hover, l
   return <section className="legend-card" aria-label="Interactive temperature legend">
     <div className="legend-heading"><div><span className="eyebrow">TEMPERATURE DISTRIBUTION</span>
       <p>{mode === 'air' ? 'Air temperature over land' : mode === 'sst' ? 'Sea-surface temperature over ocean' : 'Land air + ocean surface composite'}</p></div>
-      <div className={`legend-readout ${selection ? 'active' : ''}`} aria-live="polite">
-        {selection ? <><strong>{formatLegendValue(selection.value, unit)}</strong><span>±{unit === 'F' ? '0.9' : '0.5'}° · {selection.locked ? 'LOCKED' : 'HOVER'}</span></> : <><strong>—</strong><span>SELECT RANGE</span></>}
-      </div></div>
+      <div className="legend-actions"><div className={`legend-readout ${selection ? 'active' : ''}`} aria-live="polite">
+        {selection ? <><strong>{formatLegendValue(selection.value, unit)}</strong><span>{formatBand(bandHalfWidthC)} · {selection.locked ? 'LOCKED' : 'HOVER'}</span></> : <><strong>—</strong><span>SELECT RANGE</span></>}
+      </div><label className="legend-band"><span>Highlight band</span><select aria-label="Highlight band" value={bandHalfWidthC} onChange={handleBandChange}>
+        {HIGHLIGHT_BAND_HALF_WIDTHS_C.map((halfWidth) => <option key={halfWidth} value={halfWidth}>{formatBand(halfWidth)}</option>)}
+      </select></label></div></div>
     <svg className="legend-svg" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="slider" tabIndex={0}
       aria-label="Temperature range selector" aria-valuemin={celsiusToDisplay(ANNUAL_SCALE.minimum, unit)} aria-valuemax={celsiusToDisplay(ANNUAL_SCALE.maximum, unit)}
       aria-valuenow={celsiusToDisplay(selection?.value ?? keyboardValue, unit)} aria-valuetext={formatLegendValue(selection?.value ?? keyboardValue, unit)}

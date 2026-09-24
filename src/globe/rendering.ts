@@ -22,3 +22,12 @@ export function heatmapGridActive(style: TemperatureRenderStyle): number {
   return style === 'heatmap' ? 1 : 0;
 }
 
+export function replaceTemperatureFieldTexture(
+  uniforms: THREE.ShaderMaterial['uniforms'],
+  fieldTexture: THREE.DataTexture,
+): void {
+  const fieldUniform = uniforms.uField;
+  if (!fieldUniform) throw new Error('Temperature shader is missing its field uniform');
+  fieldUniform.value = fieldTexture;
+}
+

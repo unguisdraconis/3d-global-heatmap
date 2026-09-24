@@ -5,7 +5,7 @@ import type { DisplayMode, FramePair, HoveredCell, LegendSelection, TemperatureR
 import { latLonToGridCell, spherePointToLatLon } from '../climate/grid';
 import { createPaletteTexture } from './textures';
 import { DisplayTextureCache } from './displayTextureCache';
-import { canonicalGridUniformSize, HEATMAP_GRID_PRESENTATION, heatmapGridActive } from './rendering';
+import { canonicalGridUniformSize, HEATMAP_GRID_PRESENTATION, heatmapGridActive, replaceTemperatureFieldTexture } from './rendering';
 import { lookupTemperatureAtIndex } from './temperatureLookup';
 import vertexShader from './shaders/temperature.vert.glsl?raw';
 import fragmentShader from './shaders/temperature.frag.glsl?raw';
@@ -22,9 +22,10 @@ export function TemperatureSphere({ frames, mask, mode, renderStyle, highlight, 
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const initialRenderStyle = useRef(renderStyle);
   const fieldTexture = useMemo(() => displayTextureCache.get(frames.current, mask, mode), [frames, mask, mode]);
+  const initialFieldTexture = useRef(fieldTexture);
   const paletteTexture = useMemo(() => createPaletteTexture(), []);
   const uniforms = useMemo(() => ({
-    uField: { value: fieldTexture }, uLut: { value: paletteTexture },
+    uField: { value: initialFieldTexture.current }, uLut: { value: paletteTexture },
     uHighlightActive: { value: 0 }, uHighlightMin: { value: 0 }, uHighlightMax: { value: 0 },
     uGridSize: { value: canonicalGridUniformSize() },
     uHeatmapGridActive: { value: heatmapGridActive(initialRenderStyle.current) },
@@ -33,9 +34,12 @@ export function TemperatureSphere({ frames, mask, mode, renderStyle, highlight, 
     uGridLineHalfWidthPixels: { value: HEATMAP_GRID_PRESENTATION.lineHalfWidthPixels },
     uGridFadeStartPixelsPerCell: { value: HEATMAP_GRID_PRESENTATION.fadeStartPixelsPerCell },
     uGridFadeEndPixelsPerCell: { value: HEATMAP_GRID_PRESENTATION.fadeEndPixelsPerCell },
-  }), [fieldTexture, paletteTexture]);
+  }), [paletteTexture]);
 
   useEffect(() => () => paletteTexture.dispose(), [paletteTexture]);
+  useEffect(() => {
+    if (materialRef.current) replaceTemperatureFieldTexture(materialRef.current.uniforms, fieldTexture);
+  }, [fieldTexture]);
   useEffect(() => {
     if (materialRef.current) materialRef.current.uniforms.uHeatmapGridActive!.value = heatmapGridActive(renderStyle);
   }, [renderStyle]);

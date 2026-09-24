@@ -17,6 +17,14 @@ describe('climate state transitions', () => {
     const ready = climateReducer(loading, { type: 'FRAME_SUCCESS', week: 4, requestId: 9, pair });
     expect(ready.week).toBe(4); expect(ready.loadState).toEqual({ status: 'ready', week: 4 });
   });
+  it('preserves a locked temperature range when the current week changes', () => {
+    const locked = { value: 20, minimum: 19.5, maximum: 20.5, locked: true } satisfies LegendSelection;
+    const selected = climateReducer(initialClimateState, { type: 'SET_LEGEND_LOCK', selection: locked });
+    const loading = climateReducer(selected, { type: 'FRAME_REQUEST', week: 4, requestId: 9 });
+    const ready = climateReducer(loading, { type: 'FRAME_SUCCESS', week: 4, requestId: 9, pair });
+    expect(ready.legendLocked).toBe(locked);
+    expect(effectiveLegendSelection(ready)).toBe(locked);
+  });
   it('rejects stale responses', () => {
     const loading = climateReducer(initialClimateState, { type: 'FRAME_REQUEST', week: 8, requestId: 4 });
     expect(climateReducer(loading, { type: 'FRAME_SUCCESS', week: 7, requestId: 3, pair })).toBe(loading);

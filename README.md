@@ -13,6 +13,7 @@ Temperies is an interactive globe and flat-map explorer for weekly 2025 land-air
 ## What you can explore
 
 - Morph between the 3D globe and the raster's native Plate Carrée map without reloading data or losing the selected week and temperature range.
+  ![Plate Carrée map](image-7.png)
 - Hover either view to inspect a cell's coordinates, surface type, weekly mean temperature, source, and period.
   ![Hover a cell](image.png)
 - Hover or select the legend to highlight matching temperatures globally without scanning the raster in JavaScript.

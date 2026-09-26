@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "license": "MIT",
-  "description": "Interactive 3D explorer for weekly 2025 land-air and sea-surface temperatures.",
+  "description": "Interactive globe and Plate Carree map explorer for weekly 2025 land-air and sea-surface temperatures.",
   "homepage": "https://unguisdraconis.github.io/temperies/",
   "repository": {
     "type": "git",

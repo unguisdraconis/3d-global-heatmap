@@ -50,9 +50,10 @@ The LOW and HIGH controls identify spatial extrema in the selected period's week
 - Row order: north to south
 - Column order: west to east
 - Raster layout: equirectangular, or regular latitude–longitude/Plate Carrée
-- Display: canonical UV coordinates sample the same raster in both the 3D globe and the native Plate Carrée map; the vertex shader morphs between their positions without raster resampling
+- Display: canonical UV coordinates sample the same raster in both the 3D globe and the native 2:1 Plate Carrée map; the vertex shader morphs between corresponding sphere and plane positions without raster resampling or another data request
+- Vector overlays: coastlines and borders use matching sphere and Plate Carrée positions; segments crossing the antimeridian are split so they do not draw across the map
 
-Equal angular cells do not have equal physical area, and Plate Carrée visually enlarges high latitudes. Histogram populations and displayed-surface percentages therefore use cosine-of-latitude area weighting in both views.
+The flat view maps longitude linearly from −180° to +180° and latitude linearly from −90° to +90°. Equal angular cells do not have equal physical area, and Plate Carrée visually enlarges high latitudes. Histogram populations and displayed-surface percentages therefore use cosine-of-latitude area weighting in both views. Changing views affects presentation only; it does not alter values, cell identity, aggregation, or scientific scope.
 
 ## Composite interpretation
 

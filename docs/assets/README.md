@@ -1,8 +1,8 @@
-# Portfolio image slots
+# Portfolio image assets
 
-Add the final reviewer-facing images at these paths before publishing the portfolio update:
+The current reviewer-facing images live at these paths:
 
-- `docs/assets/temperies-hero.png` — README hero screenshot. Recommended source aspect ratio is approximately 1.83:1; keep the complete globe, period controls, and coordinated legend legible.
-- `public/social-preview.png` — LinkedIn and website social card. Use 1200 × 630 pixels, with the TEMPERIES wordmark, globe, and a short description rather than the full small-print interface.
+- `docs/assets/temperies-hero.png` — README hero screenshot. The current image uses the default globe view. For a future recapture, retain the approximately 1.83:1 aspect ratio and keep the View selector, period controls, and coordinated legend legible. A separate portfolio image can demonstrate the Plate Carrée view.
+- `public/social-preview.png` — LinkedIn and website social card. The current 1200 × 630 image uses the recognizable globe composition. Keep the TEMPERIES wordmark and concise presentation rather than trying to reproduce every small interface control.
 
-The README and HTML metadata already reference these paths. Keep the descriptive README alternative text and the social-image alternative text when replacing the files.
+The README and HTML metadata reference these paths. Alternative text must describe the replacement image itself; adding a feature to the application is not, by itself, a reason to claim that feature appears in the artwork.

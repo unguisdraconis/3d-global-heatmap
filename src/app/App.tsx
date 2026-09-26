@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, CircleHelp, RotateCcw } from 'lucide-react';
+import { CalendarDays, CircleHelp, Move, RotateCcw } from 'lucide-react';
 import { useClimateExplorer } from './useClimateExplorer';
 import { Globe } from '../globe/Globe';
 import { GlobeTooltip } from '../globe/GlobeTooltip';
@@ -9,6 +9,7 @@ import { RenderStyleControl } from '../controls/RenderStyleControl';
 import { TimelineControl } from '../controls/TimelineControl';
 import { UnitControl } from '../controls/UnitControl';
 import { LayerControl } from '../controls/LayerControl';
+import { ProjectionControl } from '../controls/ProjectionControl';
 import { formatDateRange } from '../shared/formatting';
 import { TemperiesMark } from '../shared/TemperiesMark';
 import { classifyClimateManifest } from '../climate/dataset';
@@ -59,30 +60,34 @@ export default function App() {
       <button aria-label="Close information panel" onClick={() => setInfoPanel(null)}>×</button>
       {infoPanel === 'about' ? <><blockquote className="about-epigraph" lang="la">temperie blandarum captus aquarum<cite>Ovid, Metamorphoses IV</cite></blockquote>
         <strong id="information-panel-title">{aboutHeading}</strong><p>{manifest.notice}</p>
-        <p>Land: <a href="https://cds.climate.copernicus.eu/datasets/derived-era5-single-levels-daily-statistics" target="_blank" rel="noreferrer">{manifest.sources.land.dataset}</a>, {manifest.sources.land.variable}. Ocean: <a href="https://www.ncei.noaa.gov/products/optimum-interpolation-sst" target="_blank" rel="noreferrer">{manifest.sources.ocean.dataset}</a>, {manifest.sources.ocean.variable}.</p></>
+        <p>Land: <a href="https://cds.climate.copernicus.eu/datasets/derived-era5-single-levels-daily-statistics" target="_blank" rel="noreferrer">{manifest.sources.land.dataset}</a>, {manifest.sources.land.variable}. Ocean: <a href="https://www.ncei.noaa.gov/products/optimum-interpolation-sst" target="_blank" rel="noreferrer">{manifest.sources.ocean.dataset}</a>, {manifest.sources.ocean.variable}.</p>
+        <p>The flat view uses the raster's native Plate Carrée projection. Polar screen area is enlarged by the projection; legend percentages remain cosine-of-latitude area weighted.</p></>
         : <><strong id="information-panel-title">How to explore Temperies</strong><ul>
-          <li>Drag the globe to rotate it, then scroll or pinch to zoom.</li>
-          <li>Hover the globe to inspect a cell's coordinates, source, and weekly mean temperature.</li>
+          <li>Switch between the 3D globe and the native Plate Carrée map without changing the selected week or temperature range.</li>
+          <li>Drag the globe to rotate it or drag the map to pan, then scroll or pinch to zoom.</li>
+          <li>Hover either view to inspect a cell's coordinates, source, and weekly mean temperature.</li>
           <li>Hover the legend to preview a temperature band; click it to keep that band selected while changing weeks.</li>
           <li>Use LOW or HIGH to locate the selected week's spatial extreme, and use Highlight band to widen the selected range.</li>
-          <li>Use the arrows or period slider to request another week. The current globe remains visible while the next field loads.</li>
+          <li>Use the arrows or period slider to request another week. The current view remains visible while the next field loads.</li>
         </ul></>}
     </aside>}
     <section className="workspace"><div className="scene-panel"><div className="scene-glow" />
       <Globe frames={framePair} mask={state.mask} mode={state.mode} renderStyle={state.renderStyle} highlight={highlight} vectorLayers={state.vectorLayers}
-        reducedMotion={reducedMotion} onHover={actions.setHoveredCell} onLeave={() => actions.setHoveredCell(null)} />
+        projectionMode={state.projectionMode} reducedMotion={reducedMotion} onHover={actions.setHoveredCell} onLeave={() => actions.setHoveredCell(null)} />
       {transitioning && loadingWeek !== null && <div className="field-loading-notice" role="status" aria-live="polite">
         <span className="field-loading-spinner" aria-hidden="true" />
         <span><strong>Loading temperature data</strong><small>Preparing week {String(loadingWeek + 1).padStart(2, '0')}</small></span>
       </div>}
       <div className="scene-title"><span className="eyebrow">WEEKLY MEAN · {manifest.year}</span><h1>Earth, in temperature.</h1><p>{sceneDescription}</p></div>
       <div className="status-pill"><i /> {transitioning ? 'LOADING FIELD' : readyLabel} <span>{manifest.grid.cellCount.toLocaleString()} CELLS</span></div>
-      <div className="globe-hint"><RotateCcw size={15} /> DRAG TO ROTATE · SCROLL TO ZOOM</div>
+      <div className="globe-hint">{state.projectionMode === 'globe' ? <RotateCcw size={15} /> : <Move size={15} />}
+        {state.projectionMode === 'globe' ? 'DRAG TO ROTATE · SCROLL TO ZOOM' : 'DRAG TO PAN · SCROLL TO ZOOM'}</div>
       <LayerControl layers={state.vectorLayers} onToggle={actions.toggleVectorLayer} />
       {state.hoveredCell && <GlobeTooltip cell={state.hoveredCell} mode={state.mode} unit={state.unit} manifest={manifest} frame={frame} />}
       {state.loadState.status === 'error' && state.loadState.recoverable && <div className="recoverable-error" role="alert">{state.loadState.message}<button onClick={() => actions.requestWeek(state.week)}>Retry</button></div>}
     </div>
-      <aside className="control-panel"><DisplayModeControl value={state.mode} onChange={actions.setMode} />
+      <aside className="control-panel"><ProjectionControl value={state.projectionMode} onChange={actions.setProjectionMode} />
+        <DisplayModeControl value={state.mode} onChange={actions.setMode} />
         <RenderStyleControl value={state.renderStyle} onChange={actions.setRenderStyle} />
         <section className="date-section"><div><span className="eyebrow">CURRENT PERIOD</span><h2>{dateRange}</h2><p>Week {String(state.week + 1).padStart(2, '0')} of {manifest.frames.length} <b>·</b> {modeLabel}</p></div><CalendarDays size={21} /></section>
         <TimelineControl week={state.week} frameCount={manifest.frames.length} loading={transitioning} onWeek={actions.requestWeek} />

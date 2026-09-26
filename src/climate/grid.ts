@@ -51,6 +51,16 @@ export function uvToGridCell(u: number, v: number): GridCell {
   return { row, column, index: gridCellToIndex(row, column) };
 }
 
+export function uvToLatLon(u: number, v: number): LatLon {
+  finite(u, 'u'); finite(v, 'v');
+  const clampedU = Math.min(1, Math.max(0, u));
+  const clampedV = Math.min(1, Math.max(0, v));
+  return {
+    latitude: clampedV * 180 - 90,
+    longitude: clampedU * 360 - 180,
+  };
+}
+
 export function gridCellToLatLon(row: number, column: number): LatLon {
   gridCellToIndex(row, column);
   return {

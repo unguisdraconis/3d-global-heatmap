@@ -12,11 +12,10 @@ uniform vec3 uHeatmapGridColor;
 uniform float uGridLineHalfWidthPixels;
 uniform float uGridFadeStartPixelsPerCell;
 uniform float uGridFadeEndPixelsPerCell;
-in vec3 vSpherePosition;
+in vec2 vMapUv;
 in vec3 vNormalW;
+in float vProjectionMix;
 out vec4 outColor;
-
-const float PI = 3.141592653589793;
 
 float rawValue(vec2 encodedChannels) {
   vec2 encodedBytes = floor(encodedChannels * 255.0 + 0.5);
@@ -24,12 +23,6 @@ float rawValue(vec2 encodedChannels) {
 }
 bool missing(float raw) { return raw >= 65533.5; }
 float decode(float raw) { return raw * 0.01 - 100.0; }
-vec2 sphericalUv() {
-  vec3 direction = normalize(vSpherePosition);
-  float longitude = atan(-direction.z, direction.x);
-  float latitude = asin(clamp(direction.y, -1.0, 1.0));
-  return vec2(fract((longitude + PI) / (2.0 * PI)), clamp(latitude / PI + 0.5, 0.0, 1.0));
-}
 float nativeGridCoverage(vec2 mapUv) {
   vec2 gridPosition = mapUv * uGridSize;
   vec2 positionInCell = fract(gridPosition);
@@ -56,7 +49,7 @@ float nativeGridCoverage(vec2 mapUv) {
 }
 
 void main() {
-  vec2 mapUv = sphericalUv();
+  vec2 mapUv = vMapUv;
   float rawTemperature = rawValue(texture(uField, mapUv).rg);
   float temperature = missing(rawTemperature) ? -999.0 : decode(rawTemperature);
   if (temperature < -900.0) {
@@ -64,7 +57,7 @@ void main() {
     return;
   }
   vec3 base = texture(uLut, vec2(clamp((temperature + 80.0) / 140.0, 0.0, 1.0), 0.5)).rgb;
-  float fresnel = pow(1.0 - abs(vNormalW.z), 2.2);
+  float fresnel = pow(1.0 - abs(vNormalW.z), 2.2) * (1.0 - vProjectionMix);
   base += vec3(0.02, 0.08, 0.1) * fresnel;
   base = mix(base, uHeatmapGridColor, nativeGridCoverage(mapUv));
   if (uHighlightActive > 0.5) {

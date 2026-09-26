@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { FrameRepository, loadManifest, loadMask } from '../climate/frameLoader';
 import { resolveDatasetBaseUrl } from '../climate/dataset';
-import type { DisplayMode, HoveredCell, LegendSelection, TemperatureRenderStyle, TemperatureUnit, VectorLayerVisibility } from '../climate/types';
+import type { DisplayMode, HoveredCell, LegendSelection, ProjectionMode, TemperatureRenderStyle, TemperatureUnit, VectorLayerVisibility } from '../climate/types';
 import { climateReducer, effectiveLegendSelection, initialClimateState } from './climateReducer';
 
 export function useClimateExplorer() {
@@ -44,6 +44,7 @@ export function useClimateExplorer() {
   const actions = useMemo(() => ({
     requestWeek,
     setMode: (mode: DisplayMode) => dispatch({ type: 'SET_MODE', mode }),
+    setProjectionMode: (projectionMode: ProjectionMode) => dispatch({ type: 'SET_PROJECTION_MODE', projectionMode }),
     setRenderStyle: (renderStyle: TemperatureRenderStyle) => dispatch({ type: 'SET_RENDER_STYLE', renderStyle }),
     setUnit: (unit: TemperatureUnit) => dispatch({ type: 'SET_UNIT', unit }),
     setHoveredCell: (cell: HoveredCell | null) => dispatch({ type: 'SET_HOVERED_CELL', cell }),

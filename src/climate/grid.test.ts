@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GRID } from './constants';
-import { gridCellToIndex, gridCellToLatLon, indexToGridCell, latLonToGridCell, normalizeLongitude, spherePointToLatLon, uvToGridCell } from './grid';
+import { gridCellToIndex, gridCellToLatLon, indexToGridCell, latLonToGridCell, normalizeLongitude, spherePointToLatLon, uvToGridCell, uvToLatLon } from './grid';
 
 describe('canonical grid', () => {
   it('maps northern and southern edges without overflow', () => {
@@ -37,6 +37,12 @@ describe('canonical grid', () => {
     expect(uvToGridCell(0, 1)).toEqual({ row: 0, column: 0, index: 0 });
     expect(uvToGridCell(1, 0)).toEqual({ row: 719, column: 1439, index: GRID.cellCount - 1 });
     expect(uvToGridCell(-1, 2).index).toBe(0);
+  });
+  it('converts canonical UV coordinates to continuous Plate Carrée coordinates', () => {
+    expect(uvToLatLon(0, 0)).toEqual({ latitude: -90, longitude: -180 });
+    expect(uvToLatLon(0.5, 0.5)).toEqual({ latitude: 0, longitude: 0 });
+    expect(uvToLatLon(1, 1)).toEqual({ latitude: 90, longitude: 180 });
+    expect(uvToLatLon(-1, 2)).toEqual({ latitude: 90, longitude: -180 });
   });
   it('rejects invalid indices, cells, latitude, and non-finite values', () => {
     expect(() => indexToGridCell(-1)).toThrow(RangeError); expect(() => indexToGridCell(GRID.cellCount)).toThrow(RangeError);

@@ -1,11 +1,32 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 import { mesh } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import worldData from 'world-atlas/countries-110m.json';
 import type { VectorLayerVisibility } from '../climate/types';
 import { createLineGeometry } from './vectorGeometry';
+import type { ProjectionMixRef } from './projection';
+import vertexShader from './shaders/vector.vert.glsl?raw';
+import fragmentShader from './shaders/vector.frag.glsl?raw';
 
-export function VectorLayers({ countries, coastlines }: VectorLayerVisibility) {
+interface ProjectedLineProps { geometry: THREE.BufferGeometry; color: string; opacity: number; projectionMix: ProjectionMixRef }
+
+function ProjectedLine({ geometry, color, opacity, projectionMix }: ProjectedLineProps) {
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const uniforms = useMemo(() => ({
+    uProjectionMix: { value: projectionMix.current },
+    uColor: { value: new THREE.Color(color) },
+    uOpacity: { value: opacity },
+  }), [color, opacity, projectionMix]);
+  useFrame(() => {
+    if (materialRef.current) materialRef.current.uniforms.uProjectionMix!.value = projectionMix.current;
+  });
+  return <lineSegments geometry={geometry}><shaderMaterial ref={materialRef} uniforms={uniforms} vertexShader={vertexShader}
+    fragmentShader={fragmentShader} glslVersion={THREE.GLSL3} transparent depthWrite={false} /></lineSegments>;
+}
+
+export function VectorLayers({ countries, coastlines, projectionMix }: VectorLayerVisibility & { projectionMix: ProjectionMixRef }) {
   const geometries = useMemo(() => {
     const topology = worldData as unknown as Topology<{ countries: GeometryCollection; land: GeometryCollection }>;
     return {
@@ -15,7 +36,7 @@ export function VectorLayers({ countries, coastlines }: VectorLayerVisibility) {
   }, []);
   useEffect(() => () => { geometries.borders.dispose(); geometries.coasts.dispose(); }, [geometries]);
   return <>
-    {countries && <lineSegments geometry={geometries.borders}><lineBasicMaterial color="#b8d4d2" transparent opacity={0.3} depthWrite={false} /></lineSegments>}
-    {coastlines && <lineSegments geometry={geometries.coasts}><lineBasicMaterial color="#e3f2ec" transparent opacity={0.68} depthWrite={false} /></lineSegments>}
+    {countries && <ProjectedLine geometry={geometries.borders} color="#b8d4d2" opacity={0.3} projectionMix={projectionMix} />}
+    {coastlines && <ProjectedLine geometry={geometries.coasts} color="#e3f2ec" opacity={0.68} projectionMix={projectionMix} />}
   </>;
 }

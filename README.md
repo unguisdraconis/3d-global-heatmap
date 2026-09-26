@@ -2,7 +2,7 @@
 
 [![Deploy Temperies](https://github.com/unguisdraconis/temperies/actions/workflows/deploy.yml/badge.svg)](https://github.com/unguisdraconis/temperies/actions/workflows/deploy.yml)
 
-Temperies is an interactive 3D globe for exploring weekly 2025 land-air and sea-surface temperatures. A coordinated D3 legend and Three.js globe let the reader inspect individual quarter-degree cells, select temperature bands, and see where matching conditions occur around the world.
+Temperies is an interactive globe and flat-map explorer for weekly 2025 land-air and sea-surface temperatures. A coordinated D3 legend and Three.js view let the reader inspect individual quarter-degree cells, select temperature bands, and see where matching conditions occur around the world.
 
 **[Explore the live application](https://unguisdraconis.github.io/temperies/)**
 
@@ -12,7 +12,8 @@ Temperies is an interactive 3D globe for exploring weekly 2025 land-air and sea-
 
 ## What you can explore
 
-- Hover the globe to inspect a cell's coordinates, surface type, weekly mean temperature, source, and period.
+- Morph between the 3D globe and the raster's native Plate Carrée map without reloading data or losing the selected week and temperature range.
+- Hover either view to inspect a cell's coordinates, surface type, weekly mean temperature, source, and period.
   ![Hover a cell](image.png)
 - Hover or select the legend to highlight matching temperatures globally without scanning the raster in JavaScript.
   ![Hover the legend](image-1.png)
@@ -35,14 +36,14 @@ Temperies is an interactive 3D globe for exploring weekly 2025 land-air and sea-
 
 The composite is a surface overview assembled from two physically different variables. It should not be treated as a single homogeneous observational record or as a climate-change attribution product. All modes use the same fixed −80 °C to +60 °C annual color scale so colors remain comparable between weeks.
 
-The canonical raster is a 1440 × 720 regular latitude–longitude grid with 0.25° cell spacing. The shader converts each sphere fragment to longitude and latitude before sampling the equirectangular raster. Vector borders and coastlines are converted independently from longitude and latitude to spherical geometry.
+The canonical raster is a 1440 × 720 regular latitude–longitude grid with 0.25° cell spacing. Canonical UV coordinates sample the same raster while a vertex shader morphs between spherical positions and the native Plate Carrée plane. Borders and coastlines carry corresponding sphere and map positions and split at the antimeridian. Plate Carrée enlarges polar screen area; legend populations and percentages remain cosine-of-latitude area weighted.
 
 See [Data sources and methodology](DATA_SOURCES.md) for citations, source terms, processing choices, and interpretation limits. The compact [2025 provenance record](docs/data-provenance-2025.md) preserves validation totals and checksums.
 
 ## Architecture
 
 - `src/climate` owns the canonical grid, temperature encoding, runtime manifest validation, explicit little-endian binary parsing, URL construction, frame loading, in-flight deduplication, and five-frame LRU cache.
-- `src/globe` owns React Three Fiber rendering, numeric data textures, shader filtering, CPU hover lookup, tooltips, and independent vector overlays.
+- `src/globe` owns React Three Fiber rendering, numeric data textures, the globe-to-Plate-Carrée projection morph, endpoint-specific picking, shader filtering, tooltips, and independent vector overlays.
 - `src/legend` owns the shared annual palette, D3 scale and histogram path, pointer inversion, keyboard interaction, and mode-consistent area calculations.
 - `src/app` owns semantic application state and atomic frame transitions. Per-frame rendering values do not flow through React state.
 - `scripts/real_data` owns source acquisition, canonical-grid alignment, weekly aggregation, encoding, and validation.
@@ -63,7 +64,7 @@ npm test
 npm run build
 ```
 
-The test suite covers grid edges and seams, binary encoding, manifest rejection, raster dimensions, loading failures and stale requests, LRU behavior, texture configuration, shader contracts, CPU temperature lookup, reducer behavior, and legend pointer and keyboard interaction. These checks do not constitute a formal accessibility audit or a browser-performance benchmark.
+The test suite covers grid edges and seams, projection endpoints, antimeridian vector handling, binary encoding, manifest rejection, raster dimensions, loading failures and stale requests, LRU behavior, texture configuration, shader contracts, CPU temperature lookup, reducer behavior, and legend and view-control interaction. These checks do not constitute a formal accessibility audit or a browser-performance benchmark.
 
 The interface includes visible keyboard focus, a keyboard-operable temperature selector, status and error announcements, accessible control names, and reduced-motion handling. No claim of WCAG conformance is made.
 

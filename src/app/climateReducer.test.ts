@@ -4,6 +4,12 @@ import type { FramePair, LegendSelection } from '../climate/types';
 
 const pair = { current: { id: 'a', air: new Uint16Array(), sst: new Uint16Array() }, next: { id: 'b', air: new Uint16Array(), sst: new Uint16Array() } } as FramePair;
 describe('climate state transitions', () => {
+  it('defaults to the globe and changes projection without changing climate frames', () => {
+    expect(initialClimateState.projectionMode).toBe('globe');
+    const state = { ...initialClimateState, framePair: pair };
+    const map = climateReducer(state, { type: 'SET_PROJECTION_MODE', projectionMode: 'map' });
+    expect(map.projectionMode).toBe('map'); expect(map.framePair).toBe(pair);
+  });
   it('defaults to the native heatmap style and switches without changing climate frames', () => {
     expect(initialClimateState.renderStyle).toBe('heatmap');
     const state = { ...initialClimateState, framePair: pair };

@@ -50,9 +50,9 @@ The LOW and HIGH controls identify spatial extrema in the selected period's week
 - Row order: north to south
 - Column order: west to east
 - Raster layout: equirectangular, or regular latitude–longitude/Plate Carrée
-- Display: the fragment shader derives longitude and latitude from the 3D sphere and samples the corresponding raster cell
+- Display: canonical UV coordinates sample the same raster in both the 3D globe and the native Plate Carrée map; the vertex shader morphs between their positions without raster resampling
 
-Equal angular cells do not have equal physical area. Histogram populations and displayed-surface percentages therefore use cosine-of-latitude area weighting.
+Equal angular cells do not have equal physical area, and Plate Carrée visually enlarges high latitudes. Histogram populations and displayed-surface percentages therefore use cosine-of-latitude area weighting in both views.
 
 ## Composite interpretation
 
